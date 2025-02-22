@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 void main() {
   runApp(const InkSpireApp());
@@ -59,17 +61,39 @@ class _InkSpireHomePageState extends State<InkSpireHomePage> {
   String? generatedImageUrl;
   bool isLoading = false;
 
-  void generateImage() {
-    setState(() {
-      isLoading = true;
-    });
+  Future<void> generateImage() async {
+    final prompt = _promptController.text.trim();
+    if (prompt.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a prompt.')),
+      );
+      return;
+    }
 
-    Future.delayed(const Duration(seconds: 2), () {
-      setState(() {
-        isLoading = false;
-        generatedImageUrl = 'https://via.placeholder.com/512'; // Placeholder
-      });
-    });
+    setState(() => isLoading = true);
+
+    try {
+      // Replace with your API endpoint
+      const apiUrl = 'https://api.example.com/generate-image';
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'prompt': prompt}),
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = jsonDecode(response.body);
+        setState(() => generatedImageUrl = data['image_url']);
+      } else {
+        throw Exception('Failed to generate image.');
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${e.toString()}')),
+      );
+    } finally {
+      setState(() => isLoading = false);
+    }
   }
 
   @override
@@ -101,9 +125,8 @@ class _InkSpireHomePageState extends State<InkSpireHomePage> {
                 ? const CircularProgressIndicator(color: Colors.black)
                 : generatedImageUrl != null
                 ? Expanded(
-              child: FadeInImage.assetNetwork(
-                placeholder: 'assets/images/loading.gif', // Add loading animation
-                image: generatedImageUrl!,
+              child: Image.network(
+                generatedImageUrl!,
                 fit: BoxFit.cover,
               ),
             )
