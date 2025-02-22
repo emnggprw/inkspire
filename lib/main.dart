@@ -60,17 +60,20 @@ class _InkSpireHomePageState extends State<InkSpireHomePage> {
   final TextEditingController _promptController = TextEditingController();
   String? generatedImageUrl;
   bool isLoading = false;
+  String? errorMessage;
 
   Future<void> generateImage() async {
-    final String prompt = _promptController.text.trim();
+    final prompt = _promptController.text.trim();
     if (prompt.isEmpty) {
-      showError('Prompt cannot be empty. Please enter a description.');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Prompt cannot be empty!')),
+      );
       return;
     }
 
     setState(() {
       isLoading = true;
-      generatedImageUrl = null;
+      errorMessage = null;
     });
 
     try {
@@ -81,15 +84,17 @@ class _InkSpireHomePageState extends State<InkSpireHomePage> {
       );
 
       if (response.statusCode == 200) {
-        final Map<String, dynamic> data = jsonDecode(response.body);
+        final data = jsonDecode(response.body);
         setState(() {
-          generatedImageUrl = data['imageUrl'];
+          generatedImageUrl = data['image_url'];
         });
       } else {
-        showError('Failed to generate image. Please try again.');
+        throw Exception('Failed to generate image. Please try again.');
       }
     } catch (e) {
-      showError('An error occurred: ${e.toString()}');
+      setState(() {
+        errorMessage = e.toString();
+      });
     } finally {
       setState(() {
         isLoading = false;
@@ -97,17 +102,11 @@ class _InkSpireHomePageState extends State<InkSpireHomePage> {
     }
   }
 
-  void showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.red),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('InkSpire', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('InkSpire', style: TextStyle(fontFamily: 'ComicSans', fontWeight: FontWeight.bold)),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -130,23 +129,27 @@ class _InkSpireHomePageState extends State<InkSpireHomePage> {
             const SizedBox(height: 24),
             if (isLoading)
               const CircularProgressIndicator(color: Colors.black)
+            else if (errorMessage != null)
+              Column(
+                children: [
+                  Text(errorMessage!, style: const TextStyle(color: Colors.red)),
+                  const SizedBox(height: 8),
+                  ElevatedButton(
+                    onPressed: generateImage,
+                    child: const Text('Retry'),
+                  ),
+                ],
+              )
             else if (generatedImageUrl != null)
-              Expanded(
-                child: FadeInImage.assetNetwork(
-                  placeholder: 'assets/images/loading.gif',
-                  image: generatedImageUrl!,
-                  fit: BoxFit.cover,
+                Expanded(
+                  child: Image.network(
+                    generatedImageUrl!,
+                    fit: BoxFit.cover,
+                  ),
                 ),
-              ),
           ],
         ),
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _promptController.dispose();
-    super.dispose();
   }
 }
