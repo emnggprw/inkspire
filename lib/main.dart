@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'dart:async';
+import 'dart:typed_data'; // <-- Add this import for Uint8List
 
 void main() {
   runApp(const InkSpireApp());
@@ -120,7 +120,7 @@ class _InkSpireHomePageState extends State<InkSpireHomePage> {
           String urlWithCacheBuster = "$imageUrl?cache_buster=${DateTime.now().millisecondsSinceEpoch}";
 
           setState(() {
-            generatedImageUrl = urlWithCacheBuster;
+            generatedImageUrl = urlWithCacheBuster; // Use the cache-busted URL
           });
 
           // Delay before displaying the image
@@ -172,22 +172,23 @@ class _InkSpireHomePageState extends State<InkSpireHomePage> {
           print('Current status: $status');
           print('Image URL: $imageUrl');
 
-          if (status == 'completed' && imageUrl != null) {
+          if (status == 'completed' && imageUrl != null && imageUrl.isNotEmpty) {
             // Success: Image generated and available
             print('Image generated successfully: $imageUrl');
             setState(() {
               generatedImageUrl = imageUrl;  // Update with the correct URL
-              isLoading = false;
+              isLoading = false;  // Stop loading
             });
             break;
           } else if (status == 'failed') {
             // Failure: Image generation failed
-            throw Exception('Image generation failed.');
-          } else if (status == 'submitted') {
-            // Image is still being processed
+            throw Exception('Image generation failed. No valid image URL found.');
+          } else {
+            // Image is still processing
             print('Image is still processing...');
           }
         } else {
+          // Handle error response from the server
           print('Error response: ${response.statusCode}');
           print('Error response body: ${response.body}');
           throw Exception('Failed to fetch job status: ${response.body}');
@@ -196,7 +197,7 @@ class _InkSpireHomePageState extends State<InkSpireHomePage> {
         retryCount++;
         if (retryCount < maxRetries) {
           print('Retrying in ${retryCount * 5} seconds...');
-          await Future.delayed(Duration(seconds: retryCount * 5)); // Increased retry delay
+          await Future.delayed(Duration(seconds: retryCount * 5));  // Increased retry delay
         } else {
           throw Exception('Max retries reached.');
         }
@@ -249,30 +250,21 @@ class _InkSpireHomePageState extends State<InkSpireHomePage> {
                 Text(errorMessage!,
                     style: const TextStyle(color: Colors.red, fontSize: 16))
               else if (generatedImageUrl != null)
-                  Image.network(
-                    generatedImageUrl!,
-                    fit: BoxFit.cover,
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) {
-                        return child;
-                      } else {
-                        return Center(
-                          child: CircularProgressIndicator(
-                            value: loadingProgress.expectedTotalBytes != null
-                                ? loadingProgress.cumulativeBytesLoaded /
-                                (loadingProgress.expectedTotalBytes ?? 1)
-                                : null,
-                          ),
+                  FutureBuilder(
+                    future: fetchImageBytes(generatedImageUrl!), // Fetch image bytes asynchronously
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return Center(child: CircularProgressIndicator());
+                      } else if (snapshot.hasError) {
+                        return Center(child: Text('Error loading image: ${snapshot.error}'));
+                      } else if (snapshot.hasData) {
+                        return Image.memory(
+                          snapshot.data!,
+                          fit: BoxFit.cover,
                         );
+                      } else {
+                        return const Text('No image data available.');
                       }
-                    },
-                    errorBuilder: (context, error, stackTrace) {
-                      return const Center(
-                        child: Text(
-                          'Failed to load image',
-                          style: TextStyle(fontSize: 16, color: Colors.red),
-                        ),
-                      );
                     },
                   ),
             ],
@@ -282,3 +274,24 @@ class _InkSpireHomePageState extends State<InkSpireHomePage> {
     );
   }
 }
+
+Future<Uint8List> fetchImageBytes(String imageUrl) async {
+  int retries = 3;
+  while (retries > 0) {
+    try {
+      final response = await http.get(Uri.parse(imageUrl)).timeout(const Duration(seconds: 10));
+      if (response.statusCode == 200) {
+        return response.bodyBytes;
+      } else {
+        print('Error loading image: ${response.statusCode}');
+        retries--;
+      }
+    } catch (e) {
+      print('Error fetching image: $e');
+      retries--;
+    }
+    await Future.delayed(Duration(seconds: 2));  // Retry delay
+  }
+  throw Exception('Failed to load image after retries');
+}
+
