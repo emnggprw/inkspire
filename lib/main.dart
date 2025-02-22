@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 void main() {
   runApp(const InkSpireApp());
@@ -62,45 +62,52 @@ class _InkSpireHomePageState extends State<InkSpireHomePage> {
   bool isLoading = false;
 
   Future<void> generateImage() async {
-    final prompt = _promptController.text.trim();
+    final String prompt = _promptController.text.trim();
     if (prompt.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a prompt.')),
-      );
+      showError('Prompt cannot be empty. Please enter a description.');
       return;
     }
 
-    setState(() => isLoading = true);
+    setState(() {
+      isLoading = true;
+      generatedImageUrl = null;
+    });
 
     try {
-      // Replace with your API endpoint
-      const apiUrl = 'https://api.example.com/generate-image';
       final response = await http.post(
-        Uri.parse(apiUrl),
+        Uri.parse('https://api.example.com/generate-image'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'prompt': prompt}),
       );
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = jsonDecode(response.body);
-        setState(() => generatedImageUrl = data['image_url']);
+        setState(() {
+          generatedImageUrl = data['imageUrl'];
+        });
       } else {
-        throw Exception('Failed to generate image.');
+        showError('Failed to generate image. Please try again.');
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: ${e.toString()}')),
-      );
+      showError('An error occurred: ${e.toString()}');
     } finally {
-      setState(() => isLoading = false);
+      setState(() {
+        isLoading = false;
+      });
     }
+  }
+
+  void showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('InkSpire', style: TextStyle(fontFamily: 'ComicSans', fontWeight: FontWeight.bold)),
+        title: const Text('InkSpire', style: TextStyle(fontWeight: FontWeight.bold)),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -121,19 +128,25 @@ class _InkSpireHomePageState extends State<InkSpireHomePage> {
               child: const Text('Generate Image', style: TextStyle(fontSize: 18)),
             ),
             const SizedBox(height: 24),
-            isLoading
-                ? const CircularProgressIndicator(color: Colors.black)
-                : generatedImageUrl != null
-                ? Expanded(
-              child: Image.network(
-                generatedImageUrl!,
-                fit: BoxFit.cover,
+            if (isLoading)
+              const CircularProgressIndicator(color: Colors.black)
+            else if (generatedImageUrl != null)
+              Expanded(
+                child: FadeInImage.assetNetwork(
+                  placeholder: 'assets/images/loading.gif',
+                  image: generatedImageUrl!,
+                  fit: BoxFit.cover,
+                ),
               ),
-            )
-                : const SizedBox(),
           ],
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _promptController.dispose();
+    super.dispose();
   }
 }
