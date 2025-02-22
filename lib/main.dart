@@ -60,6 +60,7 @@ class _InkSpireHomePageState extends State<InkSpireHomePage> {
   final TextEditingController _promptController = TextEditingController();
   String? generatedImageUrl;
   bool isLoading = false;
+  double progress = 0.0;
   String? errorMessage;
 
   Future<void> generateImage() async {
@@ -73,24 +74,36 @@ class _InkSpireHomePageState extends State<InkSpireHomePage> {
 
     setState(() {
       isLoading = true;
+      progress = 0.0;
       errorMessage = null;
     });
 
     try {
-      final response = await http.post(
-        Uri.parse('https://api.example.com/generate-image'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'prompt': prompt}),
-      );
+      final uri = Uri.parse('https://api.example.com/generate-image');
+      final request = http.MultipartRequest('POST', uri)
+        ..fields['prompt'] = prompt;
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+      final streamedResponse = await request.send();
+      final contentLength = streamedResponse.contentLength ?? 0;
+      int bytesReceived = 0;
+
+      streamedResponse.stream.listen((chunk) {
+        bytesReceived += chunk.length;
         setState(() {
-          generatedImageUrl = data['image_url'];
+          progress = (bytesReceived / contentLength).clamp(0.0, 1.0);
         });
-      } else {
-        throw Exception('Failed to generate image. Please try again.');
-      }
+      }, onDone: () async {
+        final response = await http.Response.fromStream(streamedResponse);
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          setState(() {
+            generatedImageUrl = data['image_url'];
+            progress = 1.0;
+          });
+        } else {
+          throw Exception('Failed to generate image. Please try again.');
+        }
+      });
     } catch (e) {
       setState(() {
         errorMessage = e.toString();
@@ -128,11 +141,26 @@ class _InkSpireHomePageState extends State<InkSpireHomePage> {
             ),
             const SizedBox(height: 24),
             if (isLoading)
-              const CircularProgressIndicator(color: Colors.black)
+              Column(
+                children: [
+                  const Text('Generating...', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 12),
+                  LinearProgressIndicator(
+                    value: progress,
+                    minHeight: 10,
+                    backgroundColor: Colors.grey[300],
+                    color: Colors.black,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  const SizedBox(height: 8),
+                  Text('${(progress * 100).toStringAsFixed(0)}% completed',
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                ],
+              )
             else if (errorMessage != null)
               Column(
                 children: [
-                  Text(errorMessage!, style: const TextStyle(color: Colors.red)),
+                  Text(errorMessage!, style: const TextStyle(color: Colors.red, fontSize: 16)),
                   const SizedBox(height: 8),
                   ElevatedButton(
                     onPressed: generateImage,
@@ -142,9 +170,12 @@ class _InkSpireHomePageState extends State<InkSpireHomePage> {
               )
             else if (generatedImageUrl != null)
                 Expanded(
-                  child: Image.network(
-                    generatedImageUrl!,
-                    fit: BoxFit.cover,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: Image.network(
+                      generatedImageUrl!,
+                      fit: BoxFit.cover,
+                    ),
                   ),
                 ),
           ],
