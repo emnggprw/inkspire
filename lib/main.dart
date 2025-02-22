@@ -92,7 +92,7 @@ class _InkSpireHomePageState extends State<InkSpireHomePage> {
           'Content-Type': 'application/json',
         },
         body: jsonEncode({
-          "prompt": prompt,  // Add this line
+          "prompt": prompt,
           "model": "realvisxl",
           "aspectRatio": "square",
           "highResolution": false,
@@ -108,21 +108,28 @@ class _InkSpireHomePageState extends State<InkSpireHomePage> {
       if (response.statusCode == 200 || response.statusCode == 201) {
         final responseData = jsonDecode(response.body);
 
-        // Assuming responseData is a map and not a list
         final creationId = responseData["id"];
         final status = responseData["status"];
 
-        // Extract the image URL (if it exists)
         final imageUrl = responseData["images"]?[0]["url"];
 
         if (status == "completed" && imageUrl != null) {
           print('Image generated successfully: $imageUrl');
+
+          // Cache-busting fix: Add a timestamp to the image URL to bypass caching
+          String urlWithCacheBuster = "$imageUrl?cache_buster=${DateTime.now().millisecondsSinceEpoch}";
+
           setState(() {
-            generatedImageUrl = imageUrl;
+            generatedImageUrl = urlWithCacheBuster;
+          });
+
+          // Delay before displaying the image
+          await Future.delayed(const Duration(seconds: 2));  // Delay for 2 seconds
+
+          setState(() {
             isLoading = false;
           });
         } else {
-          // Proceed with polling for image using creationId
           await pollForImage(creationId);
         }
       } else {
@@ -138,7 +145,7 @@ class _InkSpireHomePageState extends State<InkSpireHomePage> {
   }
 
   Future<void> pollForImage(int creationId) async {
-    final String pollUrl = 'https://api.starryai.com/creations/$creationId';
+    final String pollUrl = 'https://cors-anywhere.herokuapp.com/https://api.starryai.com/creations/$creationId';
 
     try {
       print('Polling for image with ID: $creationId');
@@ -160,24 +167,24 @@ class _InkSpireHomePageState extends State<InkSpireHomePage> {
         if (response.statusCode == 200) {
           final responseData = jsonDecode(response.body);
           final status = responseData['status'];
+          final imageUrl = responseData['images']?[0]['url'];
+
           print('Current status: $status');
+          print('Image URL: $imageUrl');
 
-          if (status == 'completed') {
-            final imageUrl = responseData['images']?[0]['url'];
-
-            if (imageUrl != null) {
-              print('Image generated successfully: $imageUrl');
-              setState(() {
-                generatedImageUrl = imageUrl;
-                isLoading = false;
-              });
-              break;
-            } else {
-              throw Exception('Image URL not found.');
-            }
+          if (status == 'completed' && imageUrl != null) {
+            // Success: Image generated and available
+            print('Image generated successfully: $imageUrl');
+            setState(() {
+              generatedImageUrl = imageUrl;  // Update with the correct URL
+              isLoading = false;
+            });
+            break;
           } else if (status == 'failed') {
+            // Failure: Image generation failed
             throw Exception('Image generation failed.');
           } else if (status == 'submitted') {
+            // Image is still being processed
             print('Image is still processing...');
           }
         } else {
@@ -189,7 +196,7 @@ class _InkSpireHomePageState extends State<InkSpireHomePage> {
         retryCount++;
         if (retryCount < maxRetries) {
           print('Retrying in ${retryCount * 5} seconds...');
-          await Future.delayed(Duration(seconds: retryCount * 5));  // Increase delay after each retry
+          await Future.delayed(Duration(seconds: retryCount * 5)); // Increased retry delay
         } else {
           throw Exception('Max retries reached.');
         }
@@ -207,8 +214,7 @@ class _InkSpireHomePageState extends State<InkSpireHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('InkSpire',
-            style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('InkSpire', style: TextStyle(fontWeight: FontWeight.bold)),
       ),
       body: SingleChildScrollView(
         child: Padding(
