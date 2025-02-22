@@ -10,17 +10,14 @@ class InkSpireApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'InkSpire',
       theme: ThemeData(
-        colorScheme: ColorScheme.dark(
-          background: Colors.black,
-          primary: Colors.white,
-          secondary: Colors.grey.shade800,
-        ),
+        brightness: Brightness.dark,
+        scaffoldBackgroundColor: Colors.black,
         textTheme: const TextTheme(
-          bodyMedium: TextStyle(color: Colors.white),
+          bodyLarge: TextStyle(color: Colors.white, fontSize: 18),
         ),
-        useMaterial3: true,
       ),
       home: const InkSpireHomePage(),
     );
@@ -36,19 +33,18 @@ class InkSpireHomePage extends StatefulWidget {
 
 class _InkSpireHomePageState extends State<InkSpireHomePage> {
   final TextEditingController _promptController = TextEditingController();
-  bool _isLoading = false;
-  String? _generatedImage;
+  String? generatedImageUrl;
+  bool isLoading = false;
 
-  void _generateImage() {
+  void generateImage() {
     setState(() {
-      _isLoading = true;
+      isLoading = true;
     });
 
-    // Simulate image generation delay
-    Future.delayed(const Duration(seconds: 3), () {
+    Future.delayed(const Duration(seconds: 2), () {
       setState(() {
-        _isLoading = false;
-        _generatedImage = 'https://via.placeholder.com/400'; // Placeholder for generated image
+        isLoading = false;
+        generatedImageUrl = 'https://via.placeholder.com/512'; // Placeholder
       });
     });
   }
@@ -56,9 +52,15 @@ class _InkSpireHomePageState extends State<InkSpireHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
       appBar: AppBar(
-        title: const Text('InkSpire', style: TextStyle(color: Colors.white)),
+        title: const Text(
+          'InkSpire',
+          style: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
@@ -68,61 +70,64 @@ class _InkSpireHomePageState extends State<InkSpireHomePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Prompt Input Field
-            TextField(
-              controller: _promptController,
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                hintText: 'Enter your image prompt...',
-                hintStyle: TextStyle(color: Colors.grey.shade500),
-                filled: true,
-                fillColor: Colors.grey.shade900,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12.0),
-                  borderSide: BorderSide.none,
-                ),
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.clear, color: Colors.white70),
-                  onPressed: _promptController.clear,
-                ),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.grey[900],
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.white.withOpacity(0.1),
+                    blurRadius: 10,
+                    spreadRadius: 1,
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(height: 20),
-
-            // Generate Button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _isLoading ? null : _generateImage,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: Colors.black,
-                  padding: const EdgeInsets.symmetric(vertical: 14.0),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12.0),
+              child: TextField(
+                controller: _promptController,
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  hintText: 'Enter your prompt...',
+                  hintStyle: TextStyle(color: Colors.white.withOpacity(0.6)),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
                   ),
                 ),
-                child: _isLoading
-                    ? const CircularProgressIndicator(color: Colors.black)
-                    : const Text('Generate Image'),
               ),
             ),
             const SizedBox(height: 20),
-
-            // Image Display
-            Expanded(
-              child: _isLoading
-                  ? const Center(child: CircularProgressIndicator(color: Colors.white))
-                  : _generatedImage != null
-                  ? ClipRRect(
-                borderRadius: BorderRadius.circular(12.0),
-                child: Image.network(_generatedImage!, fit: BoxFit.cover),
-              )
-                  : const Center(
-                child: Text('Your generated image will appear here.',
-                    style: TextStyle(color: Colors.grey)),
+            ElevatedButton(
+              onPressed: generateImage,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: Colors.black,
+                padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 32),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                elevation: 5,
               ),
+              child: const Text('Generate Image', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             ),
+            const SizedBox(height: 30),
+            if (isLoading)
+              const CircularProgressIndicator(color: Colors.white)
+            else if (generatedImageUrl != null)
+              Expanded(
+                child: Card(
+                  color: Colors.black,
+                  elevation: 10,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: Image.network(
+                      generatedImageUrl!,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
