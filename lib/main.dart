@@ -87,13 +87,14 @@ class _InkSpireHomePageState extends State<InkSpireHomePage> {
       final contentLength = streamedResponse.contentLength ?? 0;
       int bytesReceived = 0;
 
+      final response = await http.Response.fromStream(streamedResponse);
+
       streamedResponse.stream.listen((chunk) {
         bytesReceived += chunk.length;
         setState(() {
           progress = (bytesReceived / contentLength).clamp(0.0, 1.0);
         });
-      }, onDone: () async {
-        final response = await http.Response.fromStream(streamedResponse);
+      }, onDone: () {
         if (response.statusCode == 200) {
           final data = jsonDecode(response.body);
           setState(() {
@@ -121,64 +122,56 @@ class _InkSpireHomePageState extends State<InkSpireHomePage> {
       appBar: AppBar(
         title: const Text('InkSpire', style: TextStyle(fontFamily: 'ComicSans', fontWeight: FontWeight.bold)),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            TextField(
-              controller: _promptController,
-              style: const TextStyle(color: Colors.black),
-              decoration: InputDecoration(
-                hintText: 'Enter your prompt... (like describing a manga panel)',
-                hintStyle: TextStyle(color: Colors.black.withOpacity(0.6)),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              TextField(
+                controller: _promptController,
+                style: const TextStyle(color: Colors.black, fontSize: 16),
+                maxLines: 5,
+                decoration: InputDecoration(
+                  hintText: 'Enter your prompt... (like describing a manga panel)',
+                  hintStyle: TextStyle(color: Colors.black.withOpacity(0.6)),
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: generateImage,
-              child: const Text('Generate Image', style: TextStyle(fontSize: 18)),
-            ),
-            const SizedBox(height: 24),
-            if (isLoading)
-              Column(
-                children: [
-                  const Text('Generating...', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 12),
-                  LinearProgressIndicator(
-                    value: progress,
-                    minHeight: 10,
-                    backgroundColor: Colors.grey[300],
-                    color: Colors.black,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  const SizedBox(height: 8),
-                  Text('${(progress * 100).toStringAsFixed(0)}% completed',
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-                ],
-              )
-            else if (errorMessage != null)
-              Column(
-                children: [
-                  Text(errorMessage!, style: const TextStyle(color: Colors.red, fontSize: 16)),
-                  const SizedBox(height: 8),
-                  ElevatedButton(
-                    onPressed: generateImage,
-                    child: const Text('Retry'),
-                  ),
-                ],
-              )
-            else if (generatedImageUrl != null)
-                Expanded(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: generateImage,
+                child: const Text('Generate Image', style: TextStyle(fontSize: 18)),
+              ),
+              const SizedBox(height: 24),
+              if (isLoading)
+                Column(
+                  children: [
+                    const Text('Generating...', style: TextStyle(fontSize: 16)),
+                    const SizedBox(height: 8),
+                    LinearProgressIndicator(value: progress, color: Colors.black, minHeight: 8),
+                    Text('${(progress * 100).toStringAsFixed(0)}% completed', style: const TextStyle(fontSize: 14)),
+                  ],
+                )
+              else if (errorMessage != null)
+                Column(
+                  children: [
+                    Text(errorMessage!, style: const TextStyle(color: Colors.red, fontSize: 16)),
+                    const SizedBox(height: 8),
+                    ElevatedButton(
+                      onPressed: generateImage,
+                      child: const Text('Retry', style: TextStyle(fontSize: 16)),
+                    ),
+                  ],
+                )
+              else if (generatedImageUrl != null)
+                  Expanded(
                     child: Image.network(
                       generatedImageUrl!,
                       fit: BoxFit.cover,
                     ),
                   ),
-                ),
-          ],
+            ],
+          ),
         ),
       ),
     );
