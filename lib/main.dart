@@ -13,10 +13,33 @@ class InkSpireApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'InkSpire',
       theme: ThemeData(
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: Colors.black,
+        brightness: Brightness.light,
+        scaffoldBackgroundColor: Colors.white,
         textTheme: const TextTheme(
-          bodyLarge: TextStyle(color: Colors.white, fontSize: 18),
+          bodyLarge: TextStyle(color: Colors.black, fontSize: 18),
+        ),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black,
+          elevation: 0,
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: Colors.grey[100],
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Colors.black, width: 1.5),
+          ),
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.black,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
         ),
       ),
       home: const InkSpireHomePage(),
@@ -53,81 +76,38 @@ class _InkSpireHomePageState extends State<InkSpireHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'InkSpire',
-          style: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
+        title: const Text('InkSpire', style: TextStyle(fontFamily: 'ComicSans', fontWeight: FontWeight.bold)),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.grey[900],
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.white.withOpacity(0.1),
-                    blurRadius: 10,
-                    spreadRadius: 1,
-                  ),
-                ],
-              ),
-              child: TextField(
-                controller: _promptController,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  hintText: 'Enter your prompt...',
-                  hintStyle: TextStyle(color: Colors.white.withOpacity(0.6)),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
+            TextField(
+              controller: _promptController,
+              style: const TextStyle(color: Colors.black),
+              decoration: InputDecoration(
+                hintText: 'Enter your prompt... (like describing a manga panel)',
+                hintStyle: TextStyle(color: Colors.black.withOpacity(0.6)),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
             ElevatedButton(
               onPressed: generateImage,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 32),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                elevation: 5,
-              ),
-              child: const Text('Generate Image', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              child: const Text('Generate Image', style: TextStyle(fontSize: 18)),
             ),
-            const SizedBox(height: 30),
-            if (isLoading)
-              const CircularProgressIndicator(color: Colors.white)
-            else if (generatedImageUrl != null)
-              Expanded(
-                child: Card(
-                  color: Colors.black,
-                  elevation: 10,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
-                    child: Image.network(
-                      generatedImageUrl!,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
+            const SizedBox(height: 24),
+            isLoading
+                ? const CircularProgressIndicator(color: Colors.black)
+                : generatedImageUrl != null
+                ? Expanded(
+              child: FadeInImage.assetNetwork(
+                placeholder: 'assets/images/loading.gif', // Add loading animation
+                image: generatedImageUrl!,
+                fit: BoxFit.cover,
               ),
+            )
+                : const SizedBox(),
           ],
         ),
       ),
