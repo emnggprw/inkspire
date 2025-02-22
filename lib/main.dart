@@ -63,6 +63,48 @@ class _InkSpireHomePageState extends State<InkSpireHomePage> {
   double progress = 0.0;
   String? errorMessage;
 
+  /// Flexible API Call Function
+  Future<Map<String, dynamic>?> callApi({
+    required String apiUrl,
+    required Map<String, dynamic> parameters,
+    String method = 'POST',
+    Map<String, String>? headers,
+  }) async {
+    headers ??= {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer YOUR_API_KEY_HERE',
+    };
+
+    try {
+      final uri = Uri.parse(apiUrl);
+      http.Response response;
+
+      if (method.toUpperCase() == 'POST') {
+        response = await http.post(
+          uri,
+          headers: headers,
+          body: jsonEncode(parameters),
+        );
+      } else if (method.toUpperCase() == 'GET') {
+        final queryString = Uri(queryParameters: parameters).query;
+        final getUri = Uri.parse('$apiUrl?$queryString');
+        response = await http.get(getUri, headers: headers);
+      } else {
+        throw Exception('Unsupported HTTP method: $method');
+      }
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception(
+            'API call failed with status ${response.statusCode}: ${response.body}');
+      }
+    } catch (e) {
+      debugPrint('API call error: $e');
+      return null;
+    }
+  }
+
   Future<void> generateImage() async {
     final prompt = _promptController.text.trim();
     if (prompt.isEmpty) {
@@ -78,42 +120,29 @@ class _InkSpireHomePageState extends State<InkSpireHomePage> {
       errorMessage = null;
     });
 
-    try {
-      final uri = Uri.parse('https://api.example.com/generate-image');
-      final request = http.MultipartRequest('POST', uri)
-        ..fields['prompt'] = prompt;
+    final apiUrl = 'https://api.openai.com/v1/images/generations';
+    final parameters = {
+      'prompt': prompt,
+      'n': 1,
+      'size': '1024x1024',
+    };
 
-      final streamedResponse = await request.send();
-      final contentLength = streamedResponse.contentLength ?? 0;
-      int bytesReceived = 0;
+    final response = await callApi(apiUrl: apiUrl, parameters: parameters);
 
-      final response = await http.Response.fromStream(streamedResponse);
-
-      streamedResponse.stream.listen((chunk) {
-        bytesReceived += chunk.length;
-        setState(() {
-          progress = (bytesReceived / contentLength).clamp(0.0, 1.0);
-        });
-      }, onDone: () {
-        if (response.statusCode == 200) {
-          final data = jsonDecode(response.body);
-          setState(() {
-            generatedImageUrl = data['image_url'];
-            progress = 1.0;
-          });
-        } else {
-          throw Exception('Failed to generate image. Please try again.');
-        }
-      });
-    } catch (e) {
+    if (response != null && response['data'] != null) {
       setState(() {
-        errorMessage = e.toString();
+        generatedImageUrl = response['data'][0]['url'];
+        progress = 1.0;
       });
-    } finally {
+    } else {
       setState(() {
-        isLoading = false;
+        errorMessage = 'Failed to generate image. Please try again.';
       });
     }
+
+    setState(() {
+      isLoading = false;
+    });
   }
 
   @override
@@ -164,11 +193,9 @@ class _InkSpireHomePageState extends State<InkSpireHomePage> {
                   ],
                 )
               else if (generatedImageUrl != null)
-                  Expanded(
-                    child: Image.network(
-                      generatedImageUrl!,
-                      fit: BoxFit.cover,
-                    ),
+                  Image.network(
+                    generatedImageUrl!,
+                    fit: BoxFit.cover,
                   ),
             ],
           ),
