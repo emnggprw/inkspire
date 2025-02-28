@@ -62,15 +62,9 @@ InkSpire is a modern Flutter-based AI image generation app that utilizes the Ope
 - [ ] Improve UI/UX with custom animations
 - [ ] Add multilingual support
 
-## 🤝 Contributing
-Contributions are welcome! If you find a bug or want to add a feature, feel free to submit a pull request.
-
-## 📄 License
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
 ## 📬 Contact
 For any inquiries, feel free to reach out:
-- **Email:** your-email@example.com
+- **Email:** eko.mnggprw@gmail.com
 - **GitHub:** [emnggprw](https://github.com/emnggprw)
 
 ---
