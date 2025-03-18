@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:inkspire/screens/chat_screen.dart';
+import 'package:inkspire/screens/home_screen.dart';
 
 class InkSpireApp extends StatelessWidget {
   const InkSpireApp({super.key});
@@ -40,7 +40,7 @@ class InkSpireApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const ChatScreen(), // Main page of the app
+      home: const HomeScreen(), // Main page of the app
     );
   }
 }
