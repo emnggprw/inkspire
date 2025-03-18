@@ -3,14 +3,14 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:inkspire/utils/fetch_image_bytes.dart';
 
-class ChatScreen extends StatefulWidget {
-  const ChatScreen({super.key});
+class PromptScreen extends StatefulWidget {
+  const PromptScreen({super.key});
 
   @override
-  State<ChatScreen> createState() => _ChatScreenState();
+  State<PromptScreen> createState() => _PromptScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen> {
+class _PromptScreenState extends State<PromptScreen> {
   final TextEditingController _promptController = TextEditingController(); // To get user input
   String? generatedImageUrl; // Stores the generated image URL
   bool isLoading = false; // Controls loading state
