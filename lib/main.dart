@@ -47,20 +47,20 @@ class InkSpireApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const InkSpireHomePage(), // Main page of the app
+      home: const ChatScreen(), // Main page of the app
     );
   }
 }
 
 // Main screen of the InkSpire app
-class InkSpireHomePage extends StatefulWidget {
-  const InkSpireHomePage({super.key});
+class ChatScreen extends StatefulWidget {
+  const ChatScreen({super.key});
 
   @override
-  State<InkSpireHomePage> createState() => _InkSpireHomePageState();
+  State<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _InkSpireHomePageState extends State<InkSpireHomePage> {
+class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _promptController = TextEditingController(); // To get user input
   String? generatedImageUrl; // Stores the generated image URL
   bool isLoading = false; // Controls loading state

@@ -55,12 +55,6 @@ InkSpire is a modern Flutter-based AI image generation app that utilizes the Ope
 2. Click "Generate" and wait for AI to create the image.
 3. Save, share, or refine your prompt for better results.
 
-## 🛠️ Roadmap
-- [ ] Add more AI model options for generation
-- [ ] Implement user authentication for personalized history
-- [ ] Introduce premium features (e.g., high-res image generation)
-- [ ] Improve UI/UX with custom animations
-- [ ] Add multilingual support
 
 ## 📬 Contact
 For any inquiries, feel free to reach out:
