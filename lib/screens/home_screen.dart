@@ -88,21 +88,14 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           );
 
-          if (newConvo != null && newConvo is Chat) {
-            _addNewConversation(newConvo);
-          } else {
-            _addNewConversation(
-              Chat(
-                title: 'Untitled Prompt',
-                prompt: 'No prompt available',
-                lastMessage: 'AI: No response received...',
-              ),
-            );
+          if (newConvo is Chat) {
+            _addNewConversation(newConvo); // Only add if newConvo is a valid Chat
           }
         },
         backgroundColor: Colors.black,
         child: const Icon(Icons.edit, color: Colors.white),
       ),
+
     );
   }
 }
