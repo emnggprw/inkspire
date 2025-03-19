@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:inkspire/utils/fetch_image_bytes.dart';
+import 'package:inkspire/models/chat.dart';
 
 class PromptScreen extends StatefulWidget {
-  const PromptScreen({super.key});
+  final Function(Chat) onNewChat; // Callback to update home screen
+
+  const PromptScreen({super.key, required this.onNewChat});
 
   @override
   State<PromptScreen> createState() => _PromptScreenState();
@@ -12,13 +15,13 @@ class PromptScreen extends StatefulWidget {
 
 class _PromptScreenState extends State<PromptScreen> {
   final TextEditingController _promptController = TextEditingController();
-  List<Map<String, String?>> promptHistory = []; // Stores prompt history
   String? generatedImageUrl;
   bool isLoading = false;
   String? errorMessage;
 
-  final String apiKey = 'V_OqA3P49bgkpCZwCBFtfUpgfn-8IQ';
+  final String apiKey = 'V_OqA3P49bgkpCZwCBFtfUpgfn-8IQ'; // API key
 
+  // Function to generate an image
   Future<void> generateImage() async {
     final prompt = _promptController.text.trim();
     if (prompt.isEmpty) {
@@ -32,7 +35,6 @@ class _PromptScreenState extends State<PromptScreen> {
       isLoading = true;
       errorMessage = null;
       generatedImageUrl = null;
-      promptHistory.insert(0, {'prompt': prompt, 'status': 'Generating...'});
     });
 
     const String createUrl = 'https://api.starryai.com/creations/';
@@ -63,11 +65,7 @@ class _PromptScreenState extends State<PromptScreen> {
         final imageUrl = responseData["images"]?[0]["url"];
 
         if (status == "completed" && imageUrl != null) {
-          String urlWithCacheBuster = "$imageUrl?cache_buster=${DateTime.now().millisecondsSinceEpoch}";
-          setState(() {
-            generatedImageUrl = urlWithCacheBuster;
-            updatePromptHistory(prompt, 'Completed', urlWithCacheBuster);
-          });
+          saveChat(prompt, imageUrl: imageUrl);
         } else {
           await pollForImage(creationId, prompt);
         }
@@ -78,13 +76,14 @@ class _PromptScreenState extends State<PromptScreen> {
       setState(() {
         errorMessage = 'Error: $e';
         isLoading = false;
-        updatePromptHistory(prompt, 'Failed', null);
       });
+      saveChat(prompt); // Save chat even if failed
     }
   }
 
+  // Polling for image status
   Future<void> pollForImage(int creationId, String prompt) async {
-    final String pollUrl = 'https://cors-anywhere.herokuapp.com/https://api.starryai.com/creations/$creationId';
+    final String pollUrl = 'https://api.starryai.com/creations/$creationId';
 
     try {
       int retryCount = 0;
@@ -104,13 +103,9 @@ class _PromptScreenState extends State<PromptScreen> {
           final status = responseData['status'];
           final imageUrl = responseData['images']?[0]['url'];
 
-          if (status == 'completed' && imageUrl != null) {
-            setState(() {
-              generatedImageUrl = imageUrl;
-              isLoading = false;
-              updatePromptHistory(prompt, 'Completed', imageUrl);
-            });
-            break;
+          if (status == 'completed' && imageUrl != null && imageUrl.isNotEmpty) {
+            saveChat(prompt, imageUrl: imageUrl);
+            return;
           } else if (status == 'failed') {
             throw Exception('Image generation failed.');
           }
@@ -119,86 +114,66 @@ class _PromptScreenState extends State<PromptScreen> {
         retryCount++;
         await Future.delayed(Duration(seconds: retryCount * 5));
       }
+
+      throw Exception('Image generation timed out.');
     } catch (e) {
       setState(() {
         errorMessage = 'Error while polling for image: $e';
         isLoading = false;
-        updatePromptHistory(prompt, 'Failed', null);
       });
+      saveChat(prompt); // Save chat even if failed
     }
   }
 
-  void updatePromptHistory(String prompt, String status, String? imageUrl) {
+  // Function to auto-generate a title from the prompt
+  String generateTitleFromPrompt(String prompt) {
+    List<String> words = prompt.split(' ');
+    if (words.isEmpty) return "Untitled Chat";
+
+    List<String> keywords = words.where((word) => word.length > 3).toList();
+    if (keywords.length >= 3) {
+      return "${keywords[0]} ${keywords[1]} ${keywords[2]}";
+    } else if (keywords.isNotEmpty) {
+      return keywords.join(' ');
+    } else {
+      return prompt.length > 15 ? "${prompt.substring(0, 15)}..." : prompt;
+    }
+  }
+
+  // Save chat to home screen
+  void saveChat(String prompt, {String? imageUrl}) {
+    String title = generateTitleFromPrompt(prompt);
+    Chat newChat = Chat(title: title, prompt: prompt, imageUrl: imageUrl);
+    widget.onNewChat(newChat);
+
     setState(() {
-      final index = promptHistory.indexWhere((entry) => entry['prompt'] == prompt);
-      if (index != -1) {
-        promptHistory[index] = {'prompt': prompt, 'status': status, 'imageUrl': imageUrl};
-      }
+      isLoading = false;
+      generatedImageUrl = imageUrl;
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('InkSpire', style: TextStyle(fontWeight: FontWeight.bold)),
-      ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              TextField(
-                controller: _promptController,
-                style: const TextStyle(color: Colors.black, fontSize: 16),
-                maxLines: 5,
-                decoration: InputDecoration(
-                  hintText: 'Enter your prompt... (like describing a manga panel)',
-                  hintStyle: TextStyle(color: Colors.black.withOpacity(0.6)),
-                ),
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: generateImage,
-                child: const Text('Generate Image', style: TextStyle(fontSize: 18)),
-              ),
-              const SizedBox(height: 24),
-              if (isLoading)
-                Column(
-                  children: const [
-                    Text('Generating...', style: TextStyle(fontSize: 16)),
-                    SizedBox(height: 8),
-                    CircularProgressIndicator(color: Colors.black),
-                  ],
-                ),
-              if (errorMessage != null)
-                Text(errorMessage!, style: const TextStyle(color: Colors.red, fontSize: 16)),
-              if (generatedImageUrl != null)
-                FutureBuilder(
-                  future: fetchImageBytes(generatedImageUrl!),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return Center(child: CircularProgressIndicator());
-                    } else if (snapshot.hasError) {
-                      return Center(child: Text('Error loading image: ${snapshot.error}'));
-                    } else if (snapshot.hasData) {
-                      return Image.memory(snapshot.data!, fit: BoxFit.cover);
-                    } else {
-                      return const Text('No image data available.');
-                    }
-                  },
-                ),
-              const SizedBox(height: 24),
-              Text('Prompt History:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-              Column(
-                children: promptHistory.map((entry) => ListTile(
-                  title: Text(entry['prompt']!),
-                  subtitle: Text(entry['status']!),
-                )).toList(),
-              ),
-            ],
-          ),
+      appBar: AppBar(title: const Text('InkSpire')),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            TextField(
+              controller: _promptController,
+              maxLines: 5,
+              decoration: const InputDecoration(hintText: 'Enter your prompt...'),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: generateImage,
+              child: const Text('Generate Image'),
+            ),
+            if (isLoading) const CircularProgressIndicator(),
+            if (errorMessage != null) Text(errorMessage!, style: const TextStyle(color: Colors.red)),
+            if (generatedImageUrl != null) Image.network(generatedImageUrl!),
+          ],
         ),
       ),
     );
