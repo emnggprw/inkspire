@@ -24,7 +24,15 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('InkSpire')),
       body: chats.isEmpty
-          ? const Center(child: Text('No conversations yet.'))
+          ? Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Center(child: Text('No images yet')),
+                const Center(child: Text("Tap ' + ' below to start generating image")),
+              ],
+            ),
+          )
           : ListView.builder(
         itemCount: chats.length,
         itemBuilder: (context, index) {
@@ -38,17 +46,54 @@ class _HomeScreenState extends State<HomeScreen> {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => PromptScreen(onNewChat: addNewChat),
+      floatingActionButton: Container(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: RadialGradient(
+            colors: [
+              Colors.indigo.shade900, // Deep ink-like blue
+              Colors.black,           // Rich dark ink
+            ],
+            center: Alignment(-0.3, -0.3),
+            radius: 1.2,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.indigo.shade800.withOpacity(0.7),
+              blurRadius: 15,
+              spreadRadius: 5,
             ),
-          );
-        },
-        child: const Icon(Icons.add),
+          ],
+        ),
+        child: FloatingActionButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => PromptScreen(onNewChat: addNewChat),
+              ),
+            );
+          },
+          backgroundColor: Colors.transparent, // Uses gradient instead
+          elevation: 0,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
+          child: ShaderMask(
+            shaderCallback: (Rect bounds) {
+              return LinearGradient(
+                colors: [Colors.white, Colors.grey.shade300],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ).createShader(bounds);
+            },
+            child: Icon(
+              Icons.add,
+              size: 32,
+              color: Colors.white, // Stands out against dark ink
+            ),
+          ),
+        ),
       ),
+
     );
   }
 }
