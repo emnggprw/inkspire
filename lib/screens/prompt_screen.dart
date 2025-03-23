@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:inkspire/utils/fetch_image_bytes.dart';
 import 'package:inkspire/models/chat.dart';
 
 class PromptScreen extends StatefulWidget {
-  final Function(Chat) onNewChat; // Callback to update home screen
+  final Function(Chat) onNewChat;
+  final Function(String)? onImageGenerated; // Optional callback for images
 
-  const PromptScreen({super.key, required this.onNewChat});
+  const PromptScreen({super.key, required this.onNewChat, this.onImageGenerated});
 
   @override
   State<PromptScreen> createState() => _PromptScreenState();
@@ -19,9 +19,8 @@ class _PromptScreenState extends State<PromptScreen> {
   bool isLoading = false;
   String? errorMessage;
 
-  final String apiKey = 'V_OqA3P49bgkpCZwCBFtfUpgfn-8IQ'; // API key
+  final String apiKey = 'V_OqA3P49bgkpCZwCBFtfUpgfn-8IQ';
 
-  // Function to generate an image
   Future<void> generateImage() async {
     final prompt = _promptController.text.trim();
     if (prompt.isEmpty) {
@@ -77,11 +76,10 @@ class _PromptScreenState extends State<PromptScreen> {
         errorMessage = 'Error: $e';
         isLoading = false;
       });
-      saveChat(prompt); // Save chat even if failed
+      saveChat(prompt);
     }
   }
 
-  // Polling for image status
   Future<void> pollForImage(int creationId, String prompt) async {
     final String pollUrl = 'https://api.starryai.com/creations/$creationId';
 
@@ -121,11 +119,10 @@ class _PromptScreenState extends State<PromptScreen> {
         errorMessage = 'Error while polling for image: $e';
         isLoading = false;
       });
-      saveChat(prompt); // Save chat even if failed
+      saveChat(prompt);
     }
   }
 
-  // Function to auto-generate a title from the prompt
   String generateTitleFromPrompt(String prompt) {
     List<String> words = prompt.split(' ');
     if (words.isEmpty) return "Untitled Chat";
@@ -140,11 +137,14 @@ class _PromptScreenState extends State<PromptScreen> {
     }
   }
 
-  // Save chat to home screen
   void saveChat(String prompt, {String? imageUrl}) {
     String title = generateTitleFromPrompt(prompt);
     Chat newChat = Chat(title: title, prompt: prompt, imageUrl: imageUrl);
     widget.onNewChat(newChat);
+
+    if (imageUrl != null && widget.onImageGenerated != null) {
+      widget.onImageGenerated!(imageUrl); // Notify about the generated image
+    }
 
     setState(() {
       isLoading = false;
