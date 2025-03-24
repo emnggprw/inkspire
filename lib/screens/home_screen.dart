@@ -9,7 +9,7 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
   List<Chat> chats = [];
 
   // Function to handle new chat additions
@@ -25,75 +25,93 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(title: const Text('InkSpire')),
       body: chats.isEmpty
           ? Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Center(child: Text('No images yet')),
-                const Center(child: Text("Tap ' + ' below to start generating image")),
-              ],
-            ),
-          )
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.image_outlined, size: 50, color: Colors.grey),
+            const SizedBox(height: 10),
+            const Text('No creations yet.', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 5),
+            const Text("Tap '+' below to bring your ideas to life!", style: TextStyle(color: Colors.grey)),
+          ],
+        ),
+      )
           : ListView.builder(
         itemCount: chats.length,
         itemBuilder: (context, index) {
           final chat = chats[index];
-          return ListTile(
-            title: Text(chat.title),
-            subtitle: Text(chat.prompt, maxLines: 1, overflow: TextOverflow.ellipsis),
-            leading: chat.imageUrl != null
-                ? Image.network(chat.imageUrl!, width: 50, height: 50, fit: BoxFit.cover)
-                : const Icon(Icons.image),
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+            child: Card(
+              elevation: 5,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              color: Colors.black.withOpacity(0.8), // Dark ink feel
+              child: ListTile(
+                title: Text(chat.title, style: const TextStyle(color: Colors.white)),
+                subtitle: Text(
+                  chat.prompt,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: Colors.grey),
+                ),
+                leading: chat.imageUrl != null
+                    ? ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(chat.imageUrl!, width: 50, height: 50, fit: BoxFit.cover),
+                )
+                    : const Icon(Icons.image, color: Colors.white70),
+                trailing: const Icon(Icons.arrow_forward_ios, color: Colors.grey),
+              ),
+            ),
           );
         },
       ),
-      floatingActionButton: Container(
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: RadialGradient(
-            colors: [
-              Colors.indigo.shade900, // Deep ink-like blue
-              Colors.black,           // Rich dark ink
-            ],
-            center: Alignment(-0.3, -0.3),
-            radius: 1.2,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.indigo.shade800.withOpacity(0.7),
-              blurRadius: 15,
-              spreadRadius: 5,
+      floatingActionButton: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => PromptScreen(onNewChat: addNewChat),
             ),
-          ],
-        ),
-        child: FloatingActionButton(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => PromptScreen(onNewChat: addNewChat),
+          );
+        },
+        borderRadius: BorderRadius.circular(50),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          width: 65,
+          height: 65,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: RadialGradient(
+              colors: [
+                Colors.indigo.shade900, // Deep ink-like blue
+                Colors.black,           // Rich dark ink
+              ],
+              center: Alignment(-0.3, -0.3),
+              radius: 1.2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.indigo.shade800.withOpacity(0.7),
+                blurRadius: 15,
+                spreadRadius: 5,
               ),
-            );
-          },
-          backgroundColor: Colors.transparent, // Uses gradient instead
-          elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
-          child: ShaderMask(
-            shaderCallback: (Rect bounds) {
-              return LinearGradient(
-                colors: [Colors.white, Colors.grey.shade300],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ).createShader(bounds);
-            },
-            child: Icon(
-              Icons.add,
-              size: 32,
-              color: Colors.white, // Stands out against dark ink
+            ],
+          ),
+          child: Center(
+            child: ShaderMask(
+              shaderCallback: (Rect bounds) {
+                return const RadialGradient(
+                  colors: [Colors.white, Colors.grey],
+                  center: Alignment.center,
+                  radius: 1.0,
+                ).createShader(bounds);
+              },
+              child: const Icon(Icons.add, size: 32, color: Colors.white),
             ),
           ),
         ),
       ),
-
     );
   }
 }
