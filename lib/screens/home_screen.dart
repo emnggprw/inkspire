@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:inkspire/models/chat.dart';
 import 'package:inkspire/screens/prompt_screen.dart';
 import 'dart:async';
+import 'package:inkspire/utils/animated_background.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -134,59 +135,4 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   }
 }
 
-class AnimatedBackground extends StatefulWidget {
-  @override
-  _AnimatedBackgroundState createState() => _AnimatedBackgroundState();
-}
 
-class _AnimatedBackgroundState extends State<AnimatedBackground>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 10),
-    )..repeat(reverse: true);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, child) {
-        return CustomPaint(
-          size: MediaQuery.of(context).size,
-          painter: InkPainter(_controller.value),
-        );
-      },
-    );
-  }
-}
-
-class InkPainter extends CustomPainter {
-  final double progress;
-  InkPainter(this.progress);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..shader = RadialGradient(
-        colors: [Colors.white38.withOpacity(0.4), Colors.black.withOpacity(0.7)],
-        radius: 1.5 - progress,
-      ).createShader(Rect.fromCircle(center: size.center(Offset.zero), radius: size.width));
-
-    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
-}
