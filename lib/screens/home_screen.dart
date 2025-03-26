@@ -5,7 +5,9 @@ import 'dart:async';
 import 'package:inkspire/utils/animated_background.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final VoidCallback onToggleTheme;
+
+  const HomeScreen({super.key, required this.onToggleTheme});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -44,7 +46,15 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('InkSpire')),
+      appBar: AppBar(
+        title: const Text('InkSpire'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.brightness_6),
+            onPressed: widget.onToggleTheme,
+          ),
+        ],
+      ),
       body: Stack(
         children: [
           AnimatedBackground(), // Dynamic ink-like background
@@ -134,5 +144,3 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
   }
 }
-
-

@@ -1,46 +1,53 @@
 import 'package:flutter/material.dart';
 import 'package:inkspire/screens/home_screen.dart';
 
-class InkSpireApp extends StatelessWidget {
+class InkSpireApp extends StatefulWidget {
   const InkSpireApp({super.key});
 
   @override
+  State<InkSpireApp> createState() => _InkSpireAppState();
+}
+
+class _InkSpireAppState extends State<InkSpireApp> {
+  ThemeMode _themeMode = ThemeMode.light;
+
+  void _toggleTheme() {
+    setState(() {
+      _themeMode = _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // MaterialApp is the root of the app, providing navigation and theming
     return MaterialApp(
-      debugShowCheckedModeBanner: false, // Removes the debug banner from the app
+      debugShowCheckedModeBanner: false,
       title: 'InkSpire',
+      themeMode: _themeMode,
       theme: ThemeData(
-        brightness: Brightness.light, // Light theme for the app
-        scaffoldBackgroundColor: Colors.white, // Background color for pages
+        brightness: Brightness.light,
+        scaffoldBackgroundColor: Colors.white,
         textTheme: const TextTheme(
           bodyLarge: TextStyle(color: Colors.black, fontSize: 18),
         ),
         appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.white, // AppBar background color
-          foregroundColor: Colors.black, // AppBar text color
-          elevation: 0, // Removes shadow under the AppBar
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          filled: true,
-          fillColor: Colors.grey[100], // Background color for text fields
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12), // Rounded corners
-            borderSide: const BorderSide(color: Colors.black, width: 1.5),
-          ),
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.black, // Button background color
-            foregroundColor: Colors.white, // Button text color
-            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12), // Rounded button shape
-            ),
-          ),
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black,
+          elevation: 0,
         ),
       ),
-      home: const HomeScreen(), // Main page of the app
+      darkTheme: ThemeData(
+        brightness: Brightness.dark,
+        scaffoldBackgroundColor: Colors.black,
+        textTheme: const TextTheme(
+          bodyLarge: TextStyle(color: Colors.white, fontSize: 18),
+        ),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.black,
+          foregroundColor: Colors.white,
+          elevation: 0,
+        ),
+      ),
+      home: HomeScreen(onToggleTheme: _toggleTheme),
     );
   }
 }
