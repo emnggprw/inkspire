@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:inkspire/models/chat.dart';
+import 'package:inkspire/utils/ink_painter.dart';
 
 class PromptScreen extends StatefulWidget {
   final Function(Chat) onNewChat;
-  final Function(String)? onImageGenerated; // Optional callback for images
+  final Function(String)? onImageGenerated;
 
   const PromptScreen({super.key, required this.onNewChat, this.onImageGenerated});
 
@@ -59,14 +60,10 @@ class _PromptScreenState extends State<PromptScreen> {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final responseData = jsonDecode(response.body);
-        final creationId = responseData["id"];
-        final status = responseData["status"];
         final imageUrl = responseData["images"]?[0]["url"];
 
-        if (status == "completed" && imageUrl != null) {
+        if (imageUrl != null) {
           saveChat(prompt, imageUrl: imageUrl);
-        } else {
-          await pollForImage(creationId, prompt);
         }
       } else {
         throw Exception('Failed to start image generation: ${response.body}');
@@ -74,49 +71,6 @@ class _PromptScreenState extends State<PromptScreen> {
     } catch (e) {
       setState(() {
         errorMessage = 'Error: $e';
-        isLoading = false;
-      });
-      saveChat(prompt);
-    }
-  }
-
-  Future<void> pollForImage(int creationId, String prompt) async {
-    final String pollUrl = 'https://api.starryai.com/creations/$creationId';
-
-    try {
-      int retryCount = 0;
-      const int maxRetries = 10;
-
-      while (retryCount < maxRetries) {
-        final response = await http.get(
-          Uri.parse(pollUrl),
-          headers: {
-            'accept': 'application/json',
-            'X-API-Key': apiKey,
-          },
-        );
-
-        if (response.statusCode == 200) {
-          final responseData = jsonDecode(response.body);
-          final status = responseData['status'];
-          final imageUrl = responseData['images']?[0]['url'];
-
-          if (status == 'completed' && imageUrl != null && imageUrl.isNotEmpty) {
-            saveChat(prompt, imageUrl: imageUrl);
-            return;
-          } else if (status == 'failed') {
-            throw Exception('Image generation failed.');
-          }
-        }
-
-        retryCount++;
-        await Future.delayed(Duration(seconds: retryCount * 5));
-      }
-
-      throw Exception('Image generation timed out.');
-    } catch (e) {
-      setState(() {
-        errorMessage = 'Error while polling for image: $e';
         isLoading = false;
       });
       saveChat(prompt);
@@ -143,7 +97,7 @@ class _PromptScreenState extends State<PromptScreen> {
     widget.onNewChat(newChat);
 
     if (imageUrl != null && widget.onImageGenerated != null) {
-      widget.onImageGenerated!(imageUrl); // Notify about the generated image
+      widget.onImageGenerated!(imageUrl);
     }
 
     setState(() {
@@ -154,27 +108,74 @@ class _PromptScreenState extends State<PromptScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       appBar: AppBar(title: const Text('InkSpire')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            TextField(
-              controller: _promptController,
-              maxLines: 5,
-              decoration: const InputDecoration(hintText: 'Enter your prompt...'),
+      body: Stack(
+        children: [
+          CustomPaint(
+            size: Size(MediaQuery.of(context).size.width, MediaQuery.of(context).size.height),
+            painter: InkPainter(0.8),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                TextField(
+                  controller: _promptController,
+                  maxLines: 5,
+                  style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+                  decoration: InputDecoration(
+                    hintText: 'Enter your prompt...',
+                    hintStyle: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black54),
+                    filled: true,
+                    fillColor: isDarkMode ? Colors.black54 : Colors.white,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                GestureDetector(
+                  onTap: generateImage,
+                  child: Container(
+                    width: double.infinity,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(25),
+                      gradient: RadialGradient(
+                        colors: [Colors.indigo.shade900, Colors.black],
+                        center: const Alignment(-0.3, -0.3),
+                        radius: 1.2,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.indigo.shade800.withOpacity(0.7),
+                          blurRadius: 15,
+                          spreadRadius: 5,
+                        ),
+                      ],
+                    ),
+                    child: Center(
+                      child: Text(
+                        'Generate Image',
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                if (isLoading) const CircularProgressIndicator(),
+                if (errorMessage != null) Text(errorMessage!, style: const TextStyle(color: Colors.red)),
+                if (generatedImageUrl != null) Padding(
+                  padding: const EdgeInsets.only(top: 16.0),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.network(generatedImageUrl!),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: generateImage,
-              child: const Text('Generate Image'),
-            ),
-            if (isLoading) const CircularProgressIndicator(),
-            if (errorMessage != null) Text(errorMessage!, style: const TextStyle(color: Colors.red)),
-            if (generatedImageUrl != null) Image.network(generatedImageUrl!),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
