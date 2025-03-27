@@ -7,8 +7,14 @@ import 'package:inkspire/utils/ink_painter.dart';
 class PromptScreen extends StatefulWidget {
   final Function(Chat) onNewChat;
   final Function(String)? onImageGenerated;
+  final VoidCallback onToggleTheme; // Added onToggleTheme parameter
 
-  const PromptScreen({super.key, required this.onNewChat, this.onImageGenerated});
+  const PromptScreen({
+    super.key,
+    required this.onNewChat,
+    this.onImageGenerated,
+    required this.onToggleTheme, // Required this now
+  });
 
   @override
   State<PromptScreen> createState() => _PromptScreenState();
@@ -110,7 +116,15 @@ class _PromptScreenState extends State<PromptScreen> {
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      appBar: AppBar(title: const Text('InkSpire')),
+      appBar: AppBar(
+        title: const Text('InkSpire'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.brightness_6),
+            onPressed: widget.onToggleTheme, // Added Theme Toggle
+          ),
+        ],
+      ),
       body: Stack(
         children: [
           CustomPaint(
@@ -154,7 +168,7 @@ class _PromptScreenState extends State<PromptScreen> {
                         ),
                       ],
                     ),
-                    child: Center(
+                    child: const Center(
                       child: Text(
                         'Generate Image',
                         style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),

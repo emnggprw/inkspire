@@ -61,11 +61,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           RefreshIndicator(
             onRefresh: _refreshChats,
             child: chats.isEmpty
-                ? Center(
+                ? const Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
-                  Text('No images yet'),
+                children: [
+                  Text('No images yet', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  SizedBox(height: 5),
                   Text("Tap ' + ' below to start generating an image"),
                 ],
               ),
@@ -91,8 +92,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     title: Text(chat.title),
                     subtitle: Text(chat.prompt, maxLines: 1, overflow: TextOverflow.ellipsis),
                     leading: chat.imageUrl != null
-                        ? Image.network(chat.imageUrl!, width: 50, height: 50, fit: BoxFit.cover)
-                        : const Icon(Icons.image),
+                        ? ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.network(chat.imageUrl!, width: 50, height: 50, fit: BoxFit.cover),
+                    )
+                        : const Icon(Icons.image, size: 40),
                   ),
                 );
               },
@@ -110,7 +114,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => PromptScreen(onNewChat: addNewChat),
+                    builder: (context) => PromptScreen(
+                      onNewChat: addNewChat,
+                      onToggleTheme: widget.onToggleTheme, // Pass theme toggle
+                    ),
                   ),
                 );
               },
