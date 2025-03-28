@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:inkspire/utils/ink_painter.dart';
+import 'package:inkspire/widgets/ink_painter.dart';
 
 class AnimatedBackground extends StatefulWidget {
   @override
