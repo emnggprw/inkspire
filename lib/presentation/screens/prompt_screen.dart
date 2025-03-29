@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:inkspire/data/models/chat.dart';
 import 'dart:convert';
-import 'package:inkspire/models/chat.dart';
-import 'package:inkspire/widgets/ink_painter.dart';
+
+import 'package:inkspire/presentation/widgets/ink_painter.dart';
 
 class PromptScreen extends StatefulWidget {
   final Function(Chat) onNewChat;

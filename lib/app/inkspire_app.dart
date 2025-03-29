@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:inkspire/screens/home_screen.dart';
+import 'package:inkspire/presentation/screens/home_screen.dart';
 
 class InkSpireApp extends StatefulWidget {
   const InkSpireApp({super.key});

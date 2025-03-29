@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:inkspire/models/chat.dart';
-import 'package:inkspire/screens/prompt_screen.dart';
-import 'package:inkspire/utils/animated_background.dart';
-import 'package:inkspire/widgets/chat_list_view.dart';
-import 'package:inkspire/widgets/custom_fab.dart';
+import 'package:inkspire/data/models/chat.dart';
+import 'package:inkspire/data/services/animated_background.dart';
+import 'package:inkspire/presentation/screens/prompt_screen.dart';
+import 'package:inkspire/presentation/widgets/chat_list_view.dart';
+import 'package:inkspire/presentation/widgets/custom_fab.dart';
 
 class HomeScreen extends StatefulWidget {
   final VoidCallback onToggleTheme;

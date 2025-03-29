@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:inkspire/models/chat.dart';
+import 'package:inkspire/data/models/chat.dart';
 
 class ChatListView extends StatelessWidget {
   final List<Chat> chats;
