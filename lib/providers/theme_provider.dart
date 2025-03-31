@@ -1,8 +1,7 @@
-// From config:
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-//Need to be implemented into main
+//Need to be implemented into main, inspire_app, homescreen, promptscreen
 class ThemeProvider extends ChangeNotifier {
   ThemeMode _themeMode = ThemeMode.light;
 

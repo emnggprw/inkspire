@@ -1,20 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:inkspire/providers/theme_provider.dart';
+import 'package:inkspire/providers/chat_provider.dart';
 import 'package:inkspire/data/models/chat.dart';
+import 'package:http/http.dart' as http;
 import 'dart:convert';
-
 import 'package:inkspire/presentation/widgets/ink_painter.dart';
+import 'package:provider/provider.dart';
 
 class PromptScreen extends StatefulWidget {
   final Function(Chat) onNewChat;
-  final Function(String)? onImageGenerated;
-  final VoidCallback onToggleTheme; // Added onToggleTheme parameter
 
   const PromptScreen({
     super.key,
     required this.onNewChat,
-    this.onImageGenerated,
-    required this.onToggleTheme, // Required this now
   });
 
   @override
@@ -103,10 +101,6 @@ class _PromptScreenState extends State<PromptScreen> {
     Chat newChat = Chat(title: title, prompt: prompt, imageUrl: imageUrl);
     widget.onNewChat(newChat);
 
-    if (imageUrl != null && widget.onImageGenerated != null) {
-      widget.onImageGenerated!(imageUrl);
-    }
-
     setState(() {
       isLoading = false;
       generatedImageUrl = imageUrl;
@@ -115,14 +109,16 @@ class _PromptScreenState extends State<PromptScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDarkMode = themeProvider.themeMode == ThemeMode.dark;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('InkSpire'),
         actions: [
           IconButton(
             icon: const Icon(Icons.brightness_6),
-            onPressed: widget.onToggleTheme, // Added Theme Toggle
+            onPressed: themeProvider.toggleTheme,
           ),
         ],
       ),
