@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:inkspire/data/models/chat.dart';
 
+//Need to be implemented into main
 class ChatProvider extends ChangeNotifier {
   final List<Chat> _chats = [];
 
