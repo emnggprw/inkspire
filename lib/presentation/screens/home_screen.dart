@@ -32,8 +32,8 @@ class HomeScreen extends StatelessWidget {
             onRefresh: () async {},
             child: ChatListView(
               chats: chatProvider.chats,
-              onRemoveChat: (index) {
-                chatProvider.removeChat(index);
+              onRemoveChat: (id) {
+                chatProvider.removeChat(id); // Now correctly removes chat by ID
               },
             ),
           ),

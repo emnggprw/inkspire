@@ -3,7 +3,7 @@ import 'package:inkspire/data/models/chat.dart';
 
 class ChatListView extends StatelessWidget {
   final List<Chat> chats;
-  final Function(int) onRemoveChat;
+  final Function(String) onRemoveChat; // Change: Use String instead of int
 
   const ChatListView({super.key, required this.chats, required this.onRemoveChat});
 
@@ -24,8 +24,8 @@ class ChatListView extends StatelessWidget {
       itemBuilder: (context, index) {
         final chat = chats[index];
         return Dismissible(
-          key: Key(chat.title),
-          onDismissed: (direction) => onRemoveChat(index),
+          key: Key(chat.id), // Now using unique ID instead of title
+          onDismissed: (direction) => onRemoveChat(chat.id), // Use ID instead of index
           background: Container(
             color: Colors.red,
             alignment: Alignment.centerRight,

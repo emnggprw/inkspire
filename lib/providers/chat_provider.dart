@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:inkspire/data/models/chat.dart';
 
-//Need to be implemented into main, inspire_app, homescreen, promptscreen
 class ChatProvider extends ChangeNotifier {
   final List<Chat> _chats = [];
 
@@ -12,8 +11,8 @@ class ChatProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void removeChat(int index) {
-    _chats.removeAt(index);
+  void removeChat(String id) {
+    _chats.removeWhere((chat) => chat.id == id);
     notifyListeners();
   }
 }
