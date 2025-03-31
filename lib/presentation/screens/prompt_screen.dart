@@ -69,16 +69,28 @@ class _PromptScreenState extends State<PromptScreen> {
 
         if (imageUrl != null) {
           saveChat(prompt, imageUrl: imageUrl);
+        } else {
+          throw Exception('Image URL missing in response.');
         }
+      } else if (response.statusCode == 400) {
+        throw Exception('Bad request: Please check your prompt and try again.');
+      } else if (response.statusCode == 403) {
+        throw Exception('Access denied: Invalid API key.');
+      } else if (response.statusCode == 500) {
+        throw Exception('Server error: Please try again later.');
       } else {
-        throw Exception('Failed to start image generation: ${response.body}');
+        throw Exception('Unexpected error: ${response.statusCode}');
       }
     } catch (e) {
       setState(() {
-        errorMessage = 'Error: $e';
+        errorMessage = 'Error: ${e.toString()}';
         isLoading = false;
       });
       saveChat(prompt);
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
     }
   }
 
