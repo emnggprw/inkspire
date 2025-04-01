@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:inkspire/providers/theme_provider.dart';
-import 'package:inkspire/providers/chat_provider.dart';
 import 'package:inkspire/data/models/chat.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -10,22 +9,31 @@ import 'package:provider/provider.dart';
 class PromptScreen extends StatefulWidget {
   final Function(Chat) onNewChat;
 
-  const PromptScreen({
-    super.key,
-    required this.onNewChat,
-  });
+  const PromptScreen({super.key, required this.onNewChat});
 
   @override
   State<PromptScreen> createState() => _PromptScreenState();
 }
 
 class _PromptScreenState extends State<PromptScreen> {
-  final TextEditingController _promptController = TextEditingController();
+  late TextEditingController _promptController;
   String? generatedImageUrl;
   bool isLoading = false;
   String? errorMessage;
 
   final String apiKey = 'V_OqA3P49bgkpCZwCBFtfUpgfn-8IQ';
+
+  @override
+  void initState() {
+    super.initState();
+    _promptController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _promptController.dispose();
+    super.dispose();
+  }
 
   Future<void> generateImage() async {
     final prompt = _promptController.text.trim();
