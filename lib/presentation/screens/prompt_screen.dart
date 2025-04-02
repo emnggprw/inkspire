@@ -133,6 +133,7 @@ class _PromptScreenState extends State<PromptScreen> {
     final isDarkMode = themeProvider.themeMode == ThemeMode.dark;
 
     return Scaffold(
+      backgroundColor: isDarkMode ? Colors.black : Colors.white, // ✅ Fixed theme consistency
       appBar: AppBar(
         title: const Text('InkSpire'),
         actions: [
@@ -162,6 +163,10 @@ class _PromptScreenState extends State<PromptScreen> {
                     filled: true,
                     fillColor: isDarkMode ? Colors.black54 : Colors.white,
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    focusedBorder: OutlineInputBorder( // ✅ Focus border color fixed
+                      borderSide: BorderSide(color: isDarkMode ? Colors.white70 : Colors.black54),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -172,16 +177,18 @@ class _PromptScreenState extends State<PromptScreen> {
                     height: 50,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(25),
-                      gradient: RadialGradient(
-                        colors: [Colors.indigo.shade900, Colors.black],
-                        center: const Alignment(-0.3, -0.3),
-                        radius: 1.2,
+                      gradient: LinearGradient( // ✅ Adjusted for better visibility in both themes
+                        colors: isDarkMode
+                            ? [Colors.indigo.shade700, Colors.indigo.shade900]
+                            : [Colors.blue.shade400, Colors.blue.shade700],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.indigo.shade800.withOpacity(0.7),
-                          blurRadius: 15,
-                          spreadRadius: 5,
+                          color: isDarkMode ? Colors.indigo.shade800.withOpacity(0.7) : Colors.blue.shade400.withOpacity(0.7),
+                          blurRadius: 10,
+                          spreadRadius: 3,
                         ),
                       ],
                     ),
