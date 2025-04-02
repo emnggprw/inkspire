@@ -6,11 +6,15 @@ class ChatProvider extends ChangeNotifier {
 
   List<Chat> get chats => _chats;
 
+  // Adds a new chat to the list, checks for duplicates based on 'id'
   void addChat(Chat chat) {
-    _chats.add(chat);
-    notifyListeners();
+    if (!_chats.any((existingChat) => existingChat.id == chat.id)) {
+      _chats.add(chat);
+      notifyListeners();
+    }
   }
 
+  // Removes a chat by its ID
   void removeChat(String id) {
     _chats.removeWhere((chat) => chat.id == id);
     notifyListeners();
