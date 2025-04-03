@@ -36,7 +36,29 @@ class ChatListView extends StatelessWidget {
         final chat = chats[index];
         return Dismissible(
           key: Key(chat.id),
-          onDismissed: (direction) => onRemoveChat(chat.id),
+          direction: DismissDirection.endToStart,
+          confirmDismiss: (direction) async {
+            return await showDialog<bool>(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: const Text("Delete Chat?"),
+                content: const Text("Are you sure you want to delete this chat?"),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(false),
+                    child: const Text("Cancel"),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(true),
+                    child: const Text("Delete", style: TextStyle(color: Colors.red)),
+                  ),
+                ],
+              ),
+            );
+          },
+          onDismissed: (direction) {
+            onRemoveChat(chat.id);
+          },
           background: Container(
             color: isDarkMode ? Colors.redAccent.shade700 : Colors.redAccent,
             alignment: Alignment.centerRight,
