@@ -21,11 +21,18 @@ class ChatListView extends StatelessWidget {
         children: [
           Text(
             'No images yet',
-            style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+            style: TextStyle(
+              color: isDarkMode ? Colors.white : Colors.black,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
           ),
           Text(
             "Tap ' + ' below to start generating an image",
-            style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black54),
+            style: TextStyle(
+              color: isDarkMode ? Colors.white70 : Colors.black54,
+              fontSize: 16,
+            ),
           ),
         ],
       ),
@@ -67,19 +74,37 @@ class ChatListView extends StatelessWidget {
           ),
           child: Card(
             color: isDarkMode ? Colors.grey[900] : Colors.white,
+            margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+            elevation: 3,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
             child: ListTile(
+              contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
               title: Text(
                 chat.title,
-                style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+                style: TextStyle(
+                  color: isDarkMode ? Colors.white : Colors.black,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
               ),
               subtitle: Text(
                 chat.prompt,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black54),
+                style: TextStyle(
+                  color: isDarkMode ? Colors.white70 : Colors.black54,
+                  fontSize: 14,
+                ),
               ),
               leading: chat.imageUrl != null
-                  ? Image.network(chat.imageUrl!, width: 50, height: 50, fit: BoxFit.cover)
+                  ? Image.network(
+                chat.imageUrl!,
+                width: 50,
+                height: 50,
+                fit: BoxFit.cover,
+              )
                   : Icon(Icons.image, color: isDarkMode ? Colors.white : Colors.black),
             ),
           ),
