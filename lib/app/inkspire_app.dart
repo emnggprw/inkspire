@@ -25,20 +25,41 @@ class InkSpireApp extends StatelessWidget {
           foregroundColor: Colors.black,
           elevation: 0,
         ),
+        cardColor: Colors.white,
+        buttonTheme: const ButtonThemeData(
+          buttonColor: Colors.indigo,
+          textTheme: ButtonTextTheme.primary,
+        ),
       ),
       darkTheme: ThemeData(
         brightness: Brightness.dark,
-        scaffoldBackgroundColor: Colors.black,
+        scaffoldBackgroundColor: const Color(0xFF121212), // Darker gray for better contrast
         textTheme: const TextTheme(
           bodyLarge: TextStyle(color: Colors.white, fontSize: 18),
+          bodyMedium: TextStyle(color: Colors.white70),
+          bodySmall: TextStyle(color: Colors.white60),
         ),
         appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.black,
+          backgroundColor: Color(0xFF1E1E1E), // Slightly lighter black for depth
           foregroundColor: Colors.white,
           elevation: 0,
         ),
+        cardColor: const Color(0xFF1E1E1E), // Matches app bar for consistency
+        buttonTheme: const ButtonThemeData(
+          buttonColor: Colors.deepPurpleAccent, // Stands out in dark mode
+          textTheme: ButtonTextTheme.primary,
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: Colors.grey[900], // Slightly lighter than the background
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Colors.white24),
+          ),
+          hintStyle: const TextStyle(color: Colors.white70),
+        ),
       ),
-      home: const HomeScreen(), // No need to pass providers manually
+      home: const HomeScreen(),
     );
   }
 }
