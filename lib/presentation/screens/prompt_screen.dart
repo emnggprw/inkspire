@@ -15,11 +15,12 @@ class PromptScreen extends StatefulWidget {
   State<PromptScreen> createState() => _PromptScreenState();
 }
 
-class _PromptScreenState extends State<PromptScreen> {
+class _PromptScreenState extends State<PromptScreen> with SingleTickerProviderStateMixin {
   late TextEditingController _promptController;
   String? generatedImageUrl;
   bool isLoading = false;
   String? errorMessage;
+  late AnimationController _animationController;
 
   final String apiKey = 'V_OqA3P49bgkpCZwCBFtfUpgfn-8IQ';
 
@@ -27,11 +28,16 @@ class _PromptScreenState extends State<PromptScreen> {
   void initState() {
     super.initState();
     _promptController = TextEditingController();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 1),
+    )..repeat();
   }
 
   @override
   void dispose() {
     _promptController.dispose();
+    _animationController.dispose();
     super.dispose();
   }
 
@@ -133,7 +139,7 @@ class _PromptScreenState extends State<PromptScreen> {
     final isDarkMode = themeProvider.themeMode == ThemeMode.dark;
 
     return Scaffold(
-      backgroundColor: isDarkMode ? Colors.black : Colors.white, // ✅ Fixed theme consistency
+      backgroundColor: isDarkMode ? Colors.black : Colors.white,
       appBar: AppBar(
         title: const Text('InkSpire'),
         actions: [
@@ -163,7 +169,7 @@ class _PromptScreenState extends State<PromptScreen> {
                     filled: true,
                     fillColor: isDarkMode ? Colors.black54 : Colors.white,
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                    focusedBorder: OutlineInputBorder( // ✅ Focus border color fixed
+                    focusedBorder: OutlineInputBorder(
                       borderSide: BorderSide(color: isDarkMode ? Colors.white70 : Colors.black54),
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -177,7 +183,7 @@ class _PromptScreenState extends State<PromptScreen> {
                     height: 50,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(25),
-                      gradient: LinearGradient( // ✅ Adjusted for better visibility in both themes
+                      gradient: LinearGradient(
                         colors: isDarkMode
                             ? [Colors.indigo.shade700, Colors.indigo.shade900]
                             : [Colors.blue.shade400, Colors.blue.shade700],
@@ -201,18 +207,41 @@ class _PromptScreenState extends State<PromptScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                if (isLoading) const CircularProgressIndicator(),
-                if (errorMessage != null) Text(errorMessage!, style: const TextStyle(color: Colors.red)),
-                if (generatedImageUrl != null) Padding(
-                  padding: const EdgeInsets.only(top: 16.0),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Image.network(generatedImageUrl!),
+                if (errorMessage != null)
+                  Text(errorMessage!, style: const TextStyle(color: Colors.red)),
+                if (generatedImageUrl != null)
+                  AnimatedOpacity(
+                    opacity: generatedImageUrl != null ? 1.0 : 0.0,
+                    duration: const Duration(milliseconds: 500),
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 16.0),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.network(generatedImageUrl!),
+                      ),
+                    ),
                   ),
-                ),
               ],
             ),
           ),
+          if (isLoading)
+            AnimatedOpacity(
+              opacity: isLoading ? 1.0 : 0.0,
+              duration: const Duration(milliseconds: 300),
+              child: Container(
+                color: Colors.black54,
+                child: Center(
+                  child: RotationTransition(
+                    turns: _animationController,
+                    child: Icon(
+                      Icons.auto_awesome,
+                      color: Colors.white,
+                      size: 60,
+                    ),
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
