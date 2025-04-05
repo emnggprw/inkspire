@@ -12,31 +12,44 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Access ThemeProvider and ChatProvider through the context
     final themeProvider = Provider.of<ThemeProvider>(context);
     final chatProvider = Provider.of<ChatProvider>(context);
+    final isDarkMode = themeProvider.themeMode == ThemeMode.dark;
 
     return Scaffold(
+      backgroundColor: isDarkMode ? Colors.black : Colors.white,
       appBar: AppBar(
         title: const Text('InkSpire'),
+        backgroundColor: isDarkMode ? Colors.black : Colors.white,
+        elevation: 4,
+        shadowColor: isDarkMode ? Colors.white10 : Colors.black12,
+        iconTheme: IconThemeData(color: isDarkMode ? Colors.white : Colors.black),
+        titleTextStyle: TextStyle(
+          color: isDarkMode ? Colors.white : Colors.black,
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.brightness_6),
-            onPressed: themeProvider.toggleTheme, // Toggle theme
+            icon: Icon(
+              isDarkMode ? Icons.nightlight_round : Icons.wb_sunny,
+              // color: isDarkMode ? Colors.yellow : Colors.indigo,
+            ),
+            onPressed: themeProvider.toggleTheme,
           ),
         ],
       ),
       body: Stack(
         children: [
-          AnimatedBackground(), // Custom animated background widget
+          AnimatedBackground(),
           RefreshIndicator(
             onRefresh: () async {
               // Add refresh logic here if needed
             },
             child: ChatListView(
-              chats: chatProvider.chats, // Display the list of chats from ChatProvider
+              chats: chatProvider.chats,
               onRemoveChat: (id) {
-                chatProvider.removeChat(id); // Removes chat by ID
+                chatProvider.removeChat(id);
               },
             ),
           ),
@@ -44,13 +57,12 @@ class HomeScreen extends StatelessWidget {
       ),
       floatingActionButton: CustomFAB(
         onPressed: () {
-          // Navigate to PromptScreen to create a new chat
           Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => PromptScreen(
                 onNewChat: (chat) {
-                  chatProvider.addChat(chat); // Add new chat to provider
+                  chatProvider.addChat(chat);
                 },
               ),
             ),

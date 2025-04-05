@@ -64,7 +64,7 @@ class _PromptScreenState extends State<PromptScreen> with SingleTickerProviderSt
         headers: {
           'accept': 'application/json',
           'content-type': 'application/json',
-          'X-API-Key': apiKey
+          'X-API-Key': apiKey,
         },
         body: jsonEncode({
           'prompt': prompt,
@@ -73,7 +73,7 @@ class _PromptScreenState extends State<PromptScreen> with SingleTickerProviderSt
           'highResolution': false,
           'images': 1,
           'steps': 10,
-          'initialImageMode': "color"
+          'initialImageMode': "color",
         }),
       );
 
@@ -144,7 +144,10 @@ class _PromptScreenState extends State<PromptScreen> with SingleTickerProviderSt
         title: const Text('InkSpire'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.brightness_6),
+            icon: Icon(
+              isDarkMode ? Icons.nightlight_round : Icons.wb_sunny,
+              // color: isDarkMode ? Colors.yellow : Colors.indigo,
+            ),
             onPressed: themeProvider.toggleTheme,
           ),
         ],
@@ -192,7 +195,9 @@ class _PromptScreenState extends State<PromptScreen> with SingleTickerProviderSt
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: isDarkMode ? Colors.indigo.shade800.withOpacity(0.7) : Colors.blue.shade400.withOpacity(0.7),
+                          color: isDarkMode
+                              ? Colors.indigo.shade800.withOpacity(0.7)
+                              : Colors.blue.shade400.withOpacity(0.7),
                           blurRadius: 10,
                           spreadRadius: 3,
                         ),
@@ -201,7 +206,11 @@ class _PromptScreenState extends State<PromptScreen> with SingleTickerProviderSt
                     child: const Center(
                       child: Text(
                         'Generate Image',
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
                     ),
                   ),
@@ -233,7 +242,7 @@ class _PromptScreenState extends State<PromptScreen> with SingleTickerProviderSt
                 child: Center(
                   child: RotationTransition(
                     turns: _animationController,
-                    child: Icon(
+                    child: const Icon(
                       Icons.auto_awesome,
                       color: Colors.white,
                       size: 60,

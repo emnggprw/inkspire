@@ -7,6 +7,16 @@ class CustomFAB extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    final gradientColors = isDarkMode
+        ? [Colors.indigo.shade900, Colors.black]
+        : [Colors.blue.shade500, Colors.blue.shade800];
+
+    final shadowColor = isDarkMode
+        ? Colors.indigo.shade800.withOpacity(0.7)
+        : Colors.blue.shade400.withOpacity(0.6);
+
     return FloatingActionButton(
       onPressed: onPressed,
       backgroundColor: Colors.transparent,
@@ -18,13 +28,13 @@ class CustomFAB extends StatelessWidget {
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           gradient: RadialGradient(
-            colors: [Colors.indigo.shade900, Colors.black],
+            colors: gradientColors,
             center: const Alignment(-0.3, -0.3),
             radius: 1.2,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.indigo.shade800.withOpacity(0.7),
+              color: shadowColor,
               blurRadius: 15,
               spreadRadius: 5,
             ),
