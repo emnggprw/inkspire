@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:inkspire/presentation/widgets/ink_painter.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart'; // ✅ NEW
 
 class PromptScreen extends StatefulWidget {
   final Function(Chat) onNewChat;
@@ -22,7 +23,7 @@ class _PromptScreenState extends State<PromptScreen> with SingleTickerProviderSt
   String? errorMessage;
   late AnimationController _animationController;
 
-  final String apiKey = 'V_OqA3P49bgkpCZwCBFtfUpgfn-8IQ';
+  final String apiKey = dotenv.env['STARRY_API_KEY'] ?? ''; // ✅ UPDATED
 
   @override
   void initState() {
@@ -64,7 +65,7 @@ class _PromptScreenState extends State<PromptScreen> with SingleTickerProviderSt
         headers: {
           'accept': 'application/json',
           'content-type': 'application/json',
-          'X-API-Key': apiKey,
+          'X-API-Key': apiKey, // ✅ UPDATED
         },
         body: jsonEncode({
           'prompt': prompt,
@@ -146,7 +147,6 @@ class _PromptScreenState extends State<PromptScreen> with SingleTickerProviderSt
           IconButton(
             icon: Icon(
               isDarkMode ? Icons.nightlight_round : Icons.wb_sunny,
-              // color: isDarkMode ? Colors.yellow : Colors.indigo,
             ),
             onPressed: themeProvider.toggleTheme,
           ),

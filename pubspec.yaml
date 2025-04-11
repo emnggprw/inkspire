@@ -38,6 +38,7 @@ dependencies:
   provider: ^6.1.2
   shared_preferences: ^2.5.2
   uuid: ^4.2.1
+  flutter_dotenv: ^5.1.0
 
 dev_dependencies:
   flutter_test:
