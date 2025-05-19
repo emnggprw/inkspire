@@ -44,8 +44,53 @@ class HomeScreen extends StatelessWidget {
           AnimatedBackground(),
           RefreshIndicator(
             onRefresh: () async {
-              // Add refresh logic here if needed
+              // Show a loading indicator
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Row(
+                    children: [
+                      SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Text('Refreshing your inspiration...'),
+                    ],
+                  ),
+                  duration: const Duration(seconds: 1),
+                  backgroundColor: isDarkMode ? Colors.grey[800] : Colors.grey[700],
+                ),
+              );
+
+              // Call the refresh method in the provider
+              await chatProvider.refreshChats();
+
+              // Show completion message if there were no errors
+              if (context.mounted && chatProvider.error == null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Text('Your gallery is up to date!'),
+                    duration: const Duration(seconds: 1),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              } else if (context.mounted && chatProvider.error != null) {
+                // Show error message if there was a problem
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Error: ${chatProvider.error}'),
+                    duration: const Duration(seconds: 2),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
             },
+            color: Theme.of(context).primaryColor,
+            backgroundColor: isDarkMode ? Colors.grey[900] : Colors.grey[100],
             child: ChatListView(
               chats: chatProvider.chats,
               onRemoveChat: (id) {
