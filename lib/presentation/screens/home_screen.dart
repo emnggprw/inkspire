@@ -4,11 +4,77 @@ import 'package:inkspire/providers/chat_provider.dart';
 import 'package:inkspire/data/services/animated_background.dart';
 import 'package:inkspire/presentation/screens/prompt_screen.dart';
 import 'package:inkspire/presentation/widgets/chat_list_view.dart';
+import 'package:inkspire/presentation/widgets/chat_grid_view.dart';
 import 'package:inkspire/presentation/widgets/custom_fab.dart';
+import 'package:inkspire/utils/view_preferences.dart';
 import 'package:provider/provider.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
+  bool _isGridView = false;
+  late AnimationController _animationController;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _animation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    );
+
+    // Load saved view mode preference
+    _loadViewMode();
+  }
+
+  Future<void> _loadViewMode() async {
+    final isGridView = await ViewPreferences.getViewMode();
+    setState(() {
+      _isGridView = isGridView;
+      if (_isGridView) {
+        _animationController.forward();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  void _toggleViewMode() {
+    setState(() {
+      _isGridView = !_isGridView;
+      if (_isGridView) {
+        _animationController.forward();
+      } else {
+        _animationController.reverse();
+      }
+
+      // Save the preference
+      ViewPreferences.saveViewMode(_isGridView);
+
+      // Show feedback to user
+      final snackBar = SnackBar(
+        content: Text('Switched to ${_isGridView ? 'grid' : 'list'} view'),
+        duration: const Duration(seconds: 1),
+        behavior: SnackBarBehavior.floating,
+        width: 200,
+      );
+      ScaffoldMessenger.of(context).showSnackBar(snackBar);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,10 +96,19 @@ class HomeScreen extends StatelessWidget {
           fontWeight: FontWeight.bold,
         ),
         actions: [
+          // View mode toggle button
+          IconButton(
+            icon: AnimatedIcon(
+              icon: AnimatedIcons.list_view,
+              progress: _animation,
+              color: isDarkMode ? Colors.white : Colors.black,
+            ),
+            onPressed: _toggleViewMode,
+            tooltip: _isGridView ? 'Switch to List View' : 'Switch to Grid View',
+          ),
           IconButton(
             icon: Icon(
               isDarkMode ? Icons.nightlight_round : Icons.wb_sunny,
-              // color: isDarkMode ? Colors.yellow : Colors.indigo,
             ),
             onPressed: themeProvider.toggleTheme,
           ),
@@ -91,11 +166,23 @@ class HomeScreen extends StatelessWidget {
             },
             color: Theme.of(context).primaryColor,
             backgroundColor: isDarkMode ? Colors.grey[900] : Colors.grey[100],
-            child: ChatListView(
-              chats: chatProvider.chats,
-              onRemoveChat: (id) {
-                chatProvider.removeChat(id);
-              },
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              child: _isGridView
+                  ? ChatGridView(
+                key: const ValueKey('grid'),
+                chats: chatProvider.chats,
+                onRemoveChat: (id) {
+                  chatProvider.removeChat(id);
+                },
+              )
+                  : ChatListView(
+                key: const ValueKey('list'),
+                chats: chatProvider.chats,
+                onRemoveChat: (id) {
+                  chatProvider.removeChat(id);
+                },
+              ),
             ),
           ),
         ],

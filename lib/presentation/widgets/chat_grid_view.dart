@@ -48,7 +48,8 @@ class ChatGridView extends StatelessWidget {
                 Positioned.fill(
                   child: Hero(
                     tag: 'image_${chat.id}',
-                    child: Image.network(
+                    child: chat.imageUrl != null
+                        ? Image.network(
                       chat.imageUrl!,
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) {
@@ -71,6 +72,13 @@ class ChatGridView extends StatelessWidget {
                           ),
                         );
                       },
+                    )
+                        : const Center(
+                      child: Icon(
+                        Icons.image_not_supported,
+                        size: 48,
+                        color: Colors.grey,
+                      ),
                     ),
                   ),
                 ),
@@ -160,9 +168,15 @@ class ChatGridView extends StatelessWidget {
           body: Center(
             child: Hero(
               tag: 'image_${chat.id}',
-              child: Image.network(
+              child: chat.imageUrl != null
+                  ? Image.network(
                 chat.imageUrl!,
                 fit: BoxFit.contain,
+              )
+                  : const Icon(
+                Icons.image_not_supported,
+                size: 128,
+                color: Colors.grey,
               ),
             ),
           ),
