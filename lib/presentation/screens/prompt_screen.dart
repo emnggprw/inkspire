@@ -156,7 +156,11 @@ class _PromptScreenState extends State<PromptScreen> with SingleTickerProviderSt
         children: [
           CustomPaint(
             size: Size(MediaQuery.of(context).size.width, MediaQuery.of(context).size.height),
-            painter: InkPainter(0.8),
+            painter: InkPainter(
+              progress: 0.8,
+              gradientColors: [Colors.blue, Colors.purple],
+              opacity: 0.9,
+            ),
           ),
           Padding(
             padding: const EdgeInsets.all(16.0),

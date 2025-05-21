@@ -31,8 +31,12 @@ class _AnimatedBackgroundState extends State<AnimatedBackground>
       animation: _controller,
       builder: (context, child) {
         return CustomPaint(
-          size: MediaQuery.of(context).size,
-          painter: InkPainter(_controller.value),
+          size: Size(MediaQuery.of(context).size.width, MediaQuery.of(context).size.height),
+          painter: InkPainter(
+            progress: 0.8,
+            gradientColors: [Colors.blue, Colors.purple],
+            opacity: 0.9,
+          ),
         );
       },
     );
