@@ -16,6 +16,8 @@ import 'package:inkspire/presentation/widgets/ink_painter.dart';
 /// - Animation lifecycle management
 /// - Screen size adaptation
 /// - Memory cleanup on disposal
+/// - Comprehensive error handling and recovery
+/// - Graceful fallbacks for edge cases
 ///
 /// See also:
 /// - [InkPainter], which handles the actual painting logic
@@ -68,23 +70,83 @@ class _AnimatedBackgroundState extends State<AnimatedBackground>
   ///
   /// This method is separated from initState for better testability
   /// and potential future customization.
+  ///
+  /// Handles various initialization errors:
+  /// - TickerProvider issues
+  /// - Animation controller creation failures
+  /// - Animation start failures
   void _initializeAnimation() {
     try {
+      // Validate widget state before creating controller
+      if (_isDisposed || !mounted) {
+        debugPrint('AnimatedBackground: Cannot initialize animation - widget not ready');
+        return;
+      }
+
       _controller = AnimationController(
         vsync: this,
         duration: _kDefaultAnimationDuration,
       );
 
-      // Start the repeating animation
+      // Add listener for animation errors
+      _controller.addStatusListener(_handleAnimationStatus);
+
+      // Start the repeating animation with error handling
+      _startAnimation();
+
+    } catch (e, stackTrace) {
+      debugPrint('AnimatedBackground: Failed to initialize animation - $e');
+      debugPrint('Stack trace: $stackTrace');
+      _createFallbackController();
+    }
+  }
+
+  /// Starts the animation with error handling.
+  void _startAnimation() {
+    try {
+      if (_controller.isAnimating) {
+        _controller.stop();
+      }
       _controller.repeat(reverse: true);
     } catch (e) {
-      // Handle potential initialization errors
-      debugPrint('AnimatedBackground: Failed to initialize animation - $e');
-      // Create a fallback controller that doesn't animate
+      debugPrint('AnimatedBackground: Failed to start animation - $e');
+      // Animation will remain static, which is acceptable fallback
+    }
+  }
+
+  /// Handles animation status changes and errors.
+  ///
+  /// [status] The current animation status.
+  void _handleAnimationStatus(AnimationStatus status) {
+    if (!mounted || _isDisposed) return;
+
+    try {
+      switch (status) {
+        case AnimationStatus.dismissed:
+        case AnimationStatus.completed:
+        // Animation completed normally
+          break;
+        case AnimationStatus.forward:
+        case AnimationStatus.reverse:
+        // Animation running normally
+          break;
+      }
+    } catch (e) {
+      debugPrint('AnimatedBackground: Error in animation status handler - $e');
+    }
+  }
+
+  /// Creates a fallback animation controller when normal initialization fails.
+  void _createFallbackController() {
+    try {
       _controller = AnimationController(
         vsync: this,
         duration: _kDefaultAnimationDuration,
+        value: 0.5, // Set to middle position for static display
       );
+    } catch (e) {
+      debugPrint('AnimatedBackground: Failed to create fallback controller - $e');
+      // At this point, we'll handle null controller in build method
     }
   }
 
@@ -92,11 +154,34 @@ class _AnimatedBackgroundState extends State<AnimatedBackground>
   ///
   /// This method ensures proper cleanup of resources when the widget
   /// is removed from the widget tree.
+  ///
+  /// Includes comprehensive cleanup and error handling:
+  /// - Safe animation controller disposal
+  /// - Status listener removal
+  /// - State flag management
+  /// - Error logging for debugging
   @override
   void dispose() {
     _isDisposed = true;
-    _controller.dispose();
-    super.dispose();
+
+    try {
+      // Remove animation status listener if it exists
+      _controller?.removeStatusListener(_handleAnimationStatus);
+
+      // Stop animation before disposal
+      if (_controller?.isAnimating == true) {
+        _controller?.stop();
+      }
+
+      // Dispose controller safely
+      _controller?.dispose();
+    } catch (e, stackTrace) {
+      debugPrint('AnimatedBackground: Error during disposal - $e');
+      debugPrint('Stack trace: $stackTrace');
+    } finally {
+      // Ensure super.dispose() is always called
+      super.dispose();
+    }
   }
 
   /// Builds the animated background widget.
@@ -121,28 +206,75 @@ class _AnimatedBackgroundState extends State<AnimatedBackground>
     );
   }
 
-  /// Builds the custom paint widget with error handling.
+  /// Builds the custom paint widget with comprehensive error handling.
   ///
   /// [context] The build context for accessing screen dimensions.
   ///
   /// Returns a [CustomPaint] widget configured with the current
   /// animation state and screen dimensions.
+  ///
+  /// Includes error handling for:
+  /// - Invalid or disposed animation controller
+  /// - Screen size calculation errors
+  /// - InkPainter creation failures
+  /// - Widget lifecycle issues
   Widget _buildCustomPaint(BuildContext context) {
     try {
+      // Validate widget and controller state
+      if (!_isWidgetReady()) {
+        return _buildFallbackWidget();
+      }
+
       final Size screenSize = _getScreenSize(context);
+      final double progress = _getAnimationProgress();
 
       return CustomPaint(
         size: screenSize,
-        painter: InkPainter(
-          progress: _kDefaultProgress,
-          gradientColors: _kDefaultGradientColors,
-          opacity: _kDefaultOpacity,
-        ),
+        painter: _createInkPainter(progress),
+      );
+    } catch (e, stackTrace) {
+      debugPrint('AnimatedBackground: Failed to build custom paint - $e');
+      debugPrint('Stack trace: $stackTrace');
+      return _buildFallbackWidget();
+    }
+  }
+
+  /// Checks if the widget and its dependencies are ready for rendering.
+  ///
+  /// Returns true if all components are properly initialized and ready.
+  bool _isWidgetReady() {
+    return mounted &&
+        !_isDisposed &&
+        _controller != null;
+  }
+
+  /// Gets the current animation progress with error handling.
+  ///
+  /// Returns the animation controller value or a fallback value.
+  double _getAnimationProgress() {
+    try {
+      return _controller?.value ?? _kDefaultProgress;
+    } catch (e) {
+      debugPrint('AnimatedBackground: Error getting animation progress - $e');
+      return _kDefaultProgress;
+    }
+  }
+
+  /// Creates an InkPainter with error handling.
+  ///
+  /// [progress] The animation progress value.
+  ///
+  /// Returns a configured InkPainter or throws if creation fails.
+  InkPainter _createInkPainter(double progress) {
+    try {
+      return InkPainter(
+        progress: progress,
+        gradientColors: _kDefaultGradientColors,
+        opacity: _kDefaultOpacity,
       );
     } catch (e) {
-      // Handle potential painting errors gracefully
-      debugPrint('AnimatedBackground: Failed to build custom paint - $e');
-      return _buildFallbackWidget();
+      debugPrint('AnimatedBackground: Failed to create InkPainter - $e');
+      rethrow; // Let the caller handle this with fallback widget
     }
   }
 
@@ -152,47 +284,127 @@ class _AnimatedBackgroundState extends State<AnimatedBackground>
   ///
   /// Returns the screen [Size] or a default size if MediaQuery is unavailable.
   ///
-  /// Throws [ArgumentError] if context is null.
+  /// This method includes comprehensive error handling for various edge cases:
+  /// - Null or invalid context
+  /// - Missing MediaQuery data
+  /// - Invalid screen dimensions
+  /// - Widget lifecycle issues
   Size _getScreenSize(BuildContext context) {
-    if (context == null) {
-      throw ArgumentError('Context cannot be null');
-    }
+    // Default fallback size for error cases
+    const Size fallbackSize = Size(400, 800);
 
     try {
-      final MediaQueryData? mediaQuery = MediaQuery.maybeOf(context);
-      if (mediaQuery != null) {
-        return mediaQuery.size;
+      // Validate context availability
+      if (!mounted || _isDisposed) {
+        debugPrint('AnimatedBackground: Widget not mounted or disposed, using fallback size');
+        return fallbackSize;
       }
 
-      // Fallback to a reasonable default size
-      debugPrint('AnimatedBackground: MediaQuery not available, using default size');
-      return const Size(400, 800);
-    } catch (e) {
+      // Get MediaQuery data safely
+      final MediaQueryData? mediaQuery = MediaQuery.maybeOf(context);
+      if (mediaQuery == null) {
+        debugPrint('AnimatedBackground: MediaQuery not available, using fallback size');
+        return fallbackSize;
+      }
+
+      final Size screenSize = mediaQuery.size;
+
+      // Validate screen dimensions
+      if (!_isValidSize(screenSize)) {
+        debugPrint('AnimatedBackground: Invalid screen size $screenSize, using fallback');
+        return fallbackSize;
+      }
+
+      return screenSize;
+    } catch (e, stackTrace) {
+      // Log detailed error information for debugging
       debugPrint('AnimatedBackground: Error getting screen size - $e');
-      return const Size(400, 800);
+      debugPrint('Stack trace: $stackTrace');
+      return fallbackSize;
     }
+  }
+
+  /// Validates if a size is reasonable for rendering.
+  ///
+  /// [size] The size to validate.
+  ///
+  /// Returns true if the size is valid (positive, finite, and reasonable),
+  /// false otherwise.
+  bool _isValidSize(Size size) {
+    const double maxReasonableSize = 10000.0;
+    const double minReasonableSize = 1.0;
+
+    return size.width.isFinite &&
+        size.height.isFinite &&
+        size.width >= minReasonableSize &&
+        size.height >= minReasonableSize &&
+        size.width <= maxReasonableSize &&
+        size.height <= maxReasonableSize;
   }
 
   /// Creates a fallback widget when painting fails.
   ///
   /// Returns a simple colored container as a fallback to ensure
   /// the UI doesn't break completely if painting fails.
+  ///
+  /// Includes error handling for fallback creation itself.
   Widget _buildFallbackWidget() {
-    return Container(
-      width: double.infinity,
-      height: double.infinity,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: _kDefaultGradientColors,
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+    try {
+      return Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: _kDefaultGradientColors,
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
         ),
-      ),
-    );
+      );
+    } catch (e) {
+      debugPrint('AnimatedBackground: Failed to create fallback widget - $e');
+      // Ultimate fallback - simple colored container
+      return Container(
+        width: double.infinity,
+        height: double.infinity,
+        color: Colors.blue.withOpacity(0.3),
+      );
+    }
   }
 
   /// Checks if the widget is still mounted and not disposed.
   ///
   /// Returns true if the widget is safe to use, false otherwise.
-  bool get isActive => mounted && !_isDisposed;
+  ///
+  /// This method includes additional safety checks for edge cases.
+  bool get isActive {
+    try {
+      return mounted && !_isDisposed && _controller != null;
+    } catch (e) {
+      debugPrint('AnimatedBackground: Error checking widget status - $e');
+      return false;
+    }
+  }
+
+  /// Provides debug information about the current widget state.
+  ///
+  /// Returns a map containing current state information for debugging.
+  ///
+  /// This method is useful for troubleshooting issues in development.
+  Map<String, dynamic> get debugInfo {
+    try {
+      return {
+        'mounted': mounted,
+        'disposed': _isDisposed,
+        'hasController': _controller != null,
+        'isAnimating': _controller?.isAnimating ?? false,
+        'animationValue': _controller?.value ?? 'null',
+        'isActive': isActive,
+      };
+    } catch (e) {
+      return {
+        'error': 'Failed to get debug info: $e',
+      };
+    }
+  }
 }
