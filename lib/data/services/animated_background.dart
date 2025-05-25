@@ -40,12 +40,15 @@ class _AnimatedBackgroundState extends State<AnimatedBackground>
   // Animation constants
   static const Duration _kDefaultAnimationDuration = Duration(seconds: 10);
   static const double _kDefaultProgress = 0.8;
-  static const double _kDefaultOpacity = 0.9;
+  static const double _kDefaultOpacity = 0.85; // Slightly reduced for more subtle satin effect
 
-  // Default gradient colors
+  // Modern black & white satin gradient colors
   static const List<Color> _kDefaultGradientColors = [
-    Colors.blue,
-    Colors.purple,
+    Color(0xFF1A1A1A), // Rich charcoal black
+    Color(0xFF4A4A4A), // Medium gray
+    Color(0xFF8A8A8A), // Light gray
+    Color(0xFFE8E8E8), // Off-white
+    Color(0xFFF5F5F5), // Pure white with subtle warmth
   ];
 
   // Animation controller for managing the background animation
@@ -355,19 +358,24 @@ class _AnimatedBackgroundState extends State<AnimatedBackground>
         height: double.infinity,
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: _kDefaultGradientColors,
+            colors: [
+              const Color(0xFF2A2A2A), // Dark charcoal
+              const Color(0xFF6A6A6A), // Medium gray
+              const Color(0xFFE0E0E0), // Light gray
+            ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
+            stops: const [0.0, 0.5, 1.0],
           ),
         ),
       );
     } catch (e) {
       debugPrint('AnimatedBackground: Failed to create fallback widget - $e');
-      // Ultimate fallback - simple colored container
+      // Ultimate fallback - simple satin gray container
       return Container(
         width: double.infinity,
         height: double.infinity,
-        color: Colors.blue.withOpacity(0.3),
+        color: const Color(0xFF4A4A4A).withOpacity(0.8),
       );
     }
   }
